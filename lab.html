@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>64 / LAB</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+/* =====================================================
+   64 / LAB — CMS-connected version
+   ===================================================== */
+
+:root {
+  --xp-blue-1: #245edb;
+  --xp-blue-2: #3d95ff;
+  --xp-blue-3: #88c0ff;
+  --xp-blue-bar-1: #1d65d9;
+  --xp-blue-bar-2: #4093ff;
+  --xp-blue-bar-3: #2a7ce8;
+  --xp-inactive-1: #7a96df;
+  --xp-inactive-2: #b9ccef;
+  --xp-green-1: #5eac56;
+  --xp-green-2: #3a823a;
+  --xp-green-3: #2d6b2c;
+  --xp-taskbar-1: #245edb;
+  --xp-taskbar-2: #3d95ff;
+  --xp-taskbar-3: #1941a5;
+  --xp-button-face: #ece9d8;
+  --xp-window-face: #ece9d8;
+  --xp-window-content: #ffffff;
+  --xp-shadow: #aca899;
+  --xp-highlight: #ffffff;
+  --xp-text: #000000;
+  --xp-selection: #316ac5;
+
+  /* BG — overridable from CMS */
+  --bg-sky-top: #2e7ad9;
+  --bg-sky-mid: #4f9fdf;
+  --bg-sky-light: #b5d4ef;
+  --bg-hill-1: #5a8d3a;
+  --bg-hill-2: #3a6b1e;
+
+  --window-shadow: 0 4px 12px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.2);
+  --bg-1: var(--bg-sky-top);
+  --bg-2: var(--bg-sky-mid);
+  --window-bg: var(--xp-window-face);
+  --window-frame: var(--xp-blue-bar-1);
+  --accent: var(--xp-selection);
+  --accent-hot: var(--xp-blue-2);
+  --ink: var(--xp-text);
+  --grey-1: var(--xp-shadow);
+  --grey-2: #7e7e7e;
+  --grey-3: #404040;
+  --selected: rgba(49,106,197,0.25);
+
+  --sans: 'Noto Sans Georgian', 'Tahoma', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --xp-ui: 'Tahoma', 'Noto Sans Georgian', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; -webkit-font-smoothing: antialiased; }
+
+body {
+  font-family: var(--sans);
+  background:
+    linear-gradient(180deg,
+      transparent 0%, transparent 64%,
+      rgba(90,141,58,0.0) 64%,
+      var(--bg-hill-1) 72%,
+      var(--bg-hill-2) 100%),
+    linear-gradient(180deg,
+      var(--bg-sky-top) 0%,
+      var(--bg-sky-mid) 25%,
+      #7eb8e8 55%,
+      var(--bg-sky-light) 75%,
+      #d4e8f5 100%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  color: var(--ink);
+  user-select: none;
+  -webkit-user-select: none;
+  position: relative;
+  transition: background 0.5s ease;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    radial-gradient(ellipse 80% 12% at 50% 73%, rgba(255,255,255,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 200px 60px at 20% 18%, rgba(255,255,255,0.55) 0%, transparent 70%),
+    radial-gradient(ellipse 240px 70px at 75% 10%, rgba(255,255,255,0.5) 0%, transparent 70%),
+    radial-gradient(ellipse 180px 50px at 45% 32%, rgba(255,255,255,0.4) 0%, transparent 70%),
+    radial-gradient(ellipse 220px 60px at 88% 24%, rgba(255,255,255,0.45) 0%, transparent 70%),
+    radial-gradient(ellipse 160px 40px at 15% 45%, rgba(255,255,255,0.3) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* BG wallpaper image override */
+body.has-wallpaper {
+  background-image: var(--wallpaper-url) !important;
+  background-size: cover !important;
+  background-position: center !important;
+}
+body.has-wallpaper::before { display: none; }
+
+img { display: block; max-width: 100%; pointer-events: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+a { color: inherit; text-decoration: none; }
+input, textarea, select { font-family: inherit; }
+.no-select { user-select: none; -webkit-user-select: none; }
+
+/* =====================================================
+   LOADING OVERLAY
+   ===================================================== */
+#loadingOverlay {
+  position: fixed; inset: 0;
+  background: linear-gradient(180deg, #1a4fa0 0%, #0a2d6e 100%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 9999;
+  color: #fff;
+  font-family: var(--mono);
+  gap: 16px;
+  transition: opacity 0.4s;
+}
+#loadingOverlay.hidden { opacity: 0; pointer-events: none; }
+.loading__logo {
+  font-size: 48px;
+  font-weight: 900;
+  font-family: var(--sans);
+  letter-spacing: -0.05em;
+}
+.loading__bar {
+  width: 200px; height: 6px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.loading__bar__fill {
+  height: 100%;
+  background: var(--xp-blue-2);
+  border-radius: 3px;
+  animation: loadFill 1.2s ease-out forwards;
+}
+@keyframes loadFill {
+  from { width: 0; }
+  to { width: 100%; }
+}
+.loading__text {
+  font-size: 11px;
+  opacity: 0.6;
+  letter-spacing: 0.06em;
+}
+
+/* =====================================================
+   TOP MENU BAR
+   ===================================================== */
+.menubar { display: none; }
+.menubar__logo { font-weight: 800; font-size: 14px; padding: 6px 10px; margin-right: 6px; cursor: pointer; border-radius: 4px; }
+.menubar__logo:hover { background: rgba(255,255,255,0.15); }
+.menubar__items { display: flex; gap: 2px; flex: 1; }
+.menubar__item { padding: 6px 10px; cursor: pointer; border-radius: 4px; font-size: 13px; position: relative; }
+.menubar__item:hover, .menubar__item.active { background: rgba(255,255,255,0.15); }
+.menubar__right { display: flex; align-items: center; gap: 6px; font-size: 12px; font-family: var(--mono); }
+.menubar__clock { padding: 6px 10px; opacity: 0.85; }
+.menubar__lang { padding: 5px 10px; border: 1px solid rgba(255,255,255,0.25); border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; letter-spacing: 0.06em; }
+.menubar__lang:hover { background: rgba(255,255,255,0.15); }
+
+/* XP Start menu */
+.dropdown {
+  position: fixed; bottom: 32px; left: 0;
+  background: linear-gradient(180deg, #f5f6fa 0%, #d9e2f0 100%);
+  border: 1px solid #0a47a8; border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  min-width: 280px; padding: 0;
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.3);
+  color: var(--ink); display: none; font-family: var(--xp-ui); z-index: 200;
+}
+.dropdown.open { display: block; animation: startUp 0.2s ease-out; }
+@keyframes startUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.dropdown::before {
+  content: 'studio 64 / lab';
+  display: block;
+  background: linear-gradient(180deg, #2c70d0 0%, #1957c5 50%, #0a47a8 100%);
+  color: #fff; font-size: 13px; font-weight: 700; padding: 10px 14px;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.4); letter-spacing: 0.02em; border-radius: 7px 7px 0 0;
+}
+.dropdown__item {
+  padding: 8px 14px; font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  position: relative; font-family: var(--xp-ui); color: #1a1a1a;
+}
+.dropdown__item:hover { background: var(--xp-selection); color: #fff; }
+.dropdown__sep { height: 1px; background: linear-gradient(90deg, transparent 0%, #aaa 50%, transparent 100%); margin: 4px 8px; }
+.dropdown__arrow { font-size: 9px; opacity: 0.6; }
+.dropdown__sub {
+  display: none; position: absolute; bottom: 0; left: calc(100% + 2px);
+  background: linear-gradient(180deg, #f5f6fa 0%, #d9e2f0 100%);
+  border: 1px solid #0a47a8; border-radius: 6px; min-width: 200px; padding: 4px 0;
+  box-shadow: 4px 4px 12px rgba(0,0,0,0.3); z-index: 10;
+}
+.dropdown__item--has-sub::after { content: ''; position: absolute; top: 0; right: -8px; width: 8px; height: 100%; pointer-events: auto; }
+.dropdown__item:hover > .dropdown__sub,
+.dropdown__item--has-sub:hover > .dropdown__sub { display: block; }
+.dropdown__item--has-sub.sub-open > .dropdown__sub { display: block; }
+
+/* =====================================================
+   DESKTOP
+   ===================================================== */
+.desktop { position: fixed; top: 0; bottom: 32px; left: 0; right: 0; z-index: 1; overflow: hidden; }
+.icon { position: absolute; width: 92px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px; border-radius: 8px; cursor: pointer; text-align: center; }
+.icon:hover { background: rgba(255,255,255,0.12); }
+.icon.selected { background: rgba(0,51,255,0.35); }
+.icon__art { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; font-size: 32px; position: relative; }
+.icon__label { font-family: var(--xp-ui); font-size: 11px; color: #fff; font-weight: 400; line-height: 1.3; text-shadow: 1px 1px 1px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.5); padding: 1px 4px; max-width: 100%; word-wrap: break-word; }
+.icon.selected .icon__label { background: var(--xp-selection); border: 1px dotted #fff; }
+
+/* Icon art styles — same as original */
+.ico-folder { width: 56px; height: 44px; position: relative; background: linear-gradient(180deg, #f6cf75 0%, #e3a949 60%, #c98828 100%); border-radius: 2px 4px 4px 4px; border: 1px solid #8d5a13; box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 1px 2px rgba(0,0,0,0.3); }
+.ico-folder::before { content: ''; position: absolute; top: -5px; left: 0; width: 22px; height: 7px; background: linear-gradient(180deg, #f6cf75 0%, #e3a949 100%); border: 1px solid #8d5a13; border-bottom: none; border-radius: 3px 6px 0 0; }
+.ico-folder--blue::after { content: ''; position: absolute; bottom: 6px; left: 8px; right: 8px; height: 14px; background: linear-gradient(180deg, #b3d4ee 0%, #6ba5d9 100%); border: 1px solid #2a5d8a; border-radius: 2px; }
+.ico-folder--green::after { content: ''; position: absolute; bottom: 6px; left: 8px; right: 8px; height: 14px; background: linear-gradient(180deg, #b6d99c 0%, #5b9d3f 100%); border: 1px solid #2c6118; border-radius: 2px; }
+.ico-folder--purple::after { content: ''; position: absolute; bottom: 6px; left: 8px; right: 8px; height: 14px; background: linear-gradient(180deg, #d4b3ee 0%, #9b6ad9 100%); border: 1px solid #5d2a8a; border-radius: 2px; }
+.ico-folder--red::after { content: 'Aa'; position: absolute; bottom: 4px; left: 8px; right: 8px; height: 16px; background: #fff; border: 1px solid #8d5a13; font-family: 'Times New Roman', serif; font-style: italic; font-weight: 700; font-size: 11px; color: #1a1a1a; text-align: center; line-height: 14px; border-radius: 1px; }
+.ico-folder--gold::after { content: '★'; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); font-size: 14px; color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,0.4); }
+.ico-doc { width: 42px; height: 54px; background: #fff; border-radius: 3px; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.ico-doc::before { content: ''; position: absolute; top: 0; right: 0; border-width: 0 12px 12px 0; border-style: solid; border-color: transparent #d4d2cc transparent transparent; }
+.ico-doc__lines { position: absolute; top: 18px; left: 6px; right: 6px; bottom: 6px; background-image: linear-gradient(0deg, transparent 33%, #888 33%, #888 35%, transparent 35%, transparent 66%, #888 66%, #888 68%, transparent 68%); background-size: 100% 9px; opacity: 0.6; }
+.ico-doc__W { position: absolute; bottom: 4px; left: 4px; right: 4px; background: #2b579a; color: #fff; font-size: 10px; font-weight: 700; text-align: center; padding: 2px; border-radius: 2px; font-family: var(--mono); }
+.ico-doc__X { background: #1d6f42; }
+.ico-doc__readme { background: #6a6a6a; }
+.ico-browser { width: 50px; height: 50px; position: relative; }
+.ico-browser::before { content: ''; position: absolute; top: 2px; left: 6px; right: 6px; height: 26px; background: linear-gradient(180deg, #c5d8ed 0%, #6493c5 50%, #2f6db5 100%); border: 1.5px solid #1a3a6b; border-radius: 2px; box-shadow: inset 1px 1px 0 rgba(255,255,255,0.4), inset -1px -1px 0 rgba(0,0,0,0.2); }
+.ico-browser::after { content: ''; position: absolute; bottom: 0; left: 4px; right: 4px; height: 18px; background: linear-gradient(180deg, #e8e6dc 0%, #c0bda8 100%); border: 1.5px solid #6a6759; border-radius: 2px; box-shadow: inset 1px 1px 0 rgba(255,255,255,0.5); }
+.ico-video { width: 50px; height: 50px; background: linear-gradient(135deg, #2a2a2a 0%, #0a0a0a 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); position: relative; }
+.ico-video::before { content: ''; width: 0; height: 0; border-left: 14px solid #fff; border-top: 9px solid transparent; border-bottom: 9px solid transparent; margin-left: 3px; }
+.ico-piggy { width: 50px; height: 44px; background: linear-gradient(135deg, #ff8fc1 0%, #ff4d94 100%); border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.ico-piggy::before { content: ''; position: absolute; top: 12px; left: 8px; width: 10px; height: 8px; background: #ff2a68; border-radius: 50%; }
+.ico-piggy::after { content: ''; position: absolute; top: 14px; left: 10px; width: 4px; height: 4px; background: #0a0a0a; border-radius: 50%; }
+.ico-trash { width: 44px; height: 50px; position: relative; }
+.ico-trash::before { content: ''; position: absolute; top: 4px; left: 9px; right: 9px; height: 18px; background: #fff; border: 1px solid #888; background-image: linear-gradient(0deg, transparent 35%, #ccc 35%, #ccc 40%, transparent 40%, transparent 60%, #ccc 60%, #ccc 65%, transparent 65%); }
+.ico-trash::after { content: ''; position: absolute; top: 16px; left: 4px; right: 4px; bottom: 0; background: linear-gradient(180deg, #4d92c9 0%, #2a6da3 50%, #1d5687 100%); border: 1px solid #14406b; border-radius: 2px 2px 4px 4px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.3); }
+
+/* =====================================================
+   TASKBAR
+   ===================================================== */
+.taskbar { position: fixed; bottom: 0; left: 0; right: 0; height: 32px; background: linear-gradient(180deg, #1d65d9 0%, #2a7ce8 8%, #3d95ff 50%, #1d65d9 92%, #0a47a8 100%); border-top: 1px solid #0a47a8; display: flex; align-items: stretch; z-index: 100; color: #fff; font-family: var(--xp-ui); font-size: 11px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.25); }
+.taskbar__brand { background: linear-gradient(180deg, #5ec043 0%, #5eac56 10%, #3a823a 50%, #2d6b2c 90%, #1f4f20 100%); border: 1px solid #1a5c1a; border-bottom: none; border-radius: 0 12px 0 0; padding: 0 18px 0 10px; display: flex; align-items: center; font-weight: 700; font-size: 13px; cursor: pointer; font-style: italic; letter-spacing: 0.01em; box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), inset -1px 0 0 rgba(255,255,255,0.1); gap: 6px; min-width: 80px; }
+.taskbar__brand::before { content: ''; width: 16px; height: 16px; background: radial-gradient(circle at 40% 35%, #ff9f00 0%, #ff6200 50%, #c83c00 100%); border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.4); flex-shrink: 0; }
+.taskbar__brand.open { background: linear-gradient(180deg, #2d6b2c 0%, #3a823a 50%, #5eac56 100%); }
+.taskbar__items { flex: 1; display: flex; align-items: center; gap: 2px; padding: 0 4px; overflow: hidden; }
+.taskbar__win { height: 26px; padding: 0 10px; display: flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 3px; background: linear-gradient(180deg, #3d95ff 0%, #2a7ce8 50%, #1957c5 100%); border: 1px solid #0a47a8; font-size: 11px; color: #fff; font-family: var(--xp-ui); min-width: 100px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; text-shadow: 1px 1px 1px rgba(0,0,0,0.4); }
+.taskbar__win:hover { filter: brightness(1.1); }
+.taskbar__win.active { background: linear-gradient(180deg, #1957c5 0%, #2a7ce8 50%, #3d95ff 100%); box-shadow: inset 1px 1px 2px rgba(0,0,0,0.35); }
+.taskbar__win::before { content: ''; width: 12px; height: 12px; background: #fff; border: 1px solid #666; border-radius: 1px; flex-shrink: 0; }
+.taskbar__hint { display: flex; align-items: center; background: linear-gradient(180deg, #1a55b5 0%, #0a47a8 50%, #2a7ce8 100%); border-left: 1px solid #0a47a8; padding: 0 12px; font-size: 11px; color: #fff; font-family: var(--xp-ui); text-shadow: 1px 1px 1px rgba(0,0,0,0.3); box-shadow: inset 1px 0 0 rgba(255,255,255,0.15); gap: 8px; cursor: default; }
+.taskbar__hint::before { content: ''; display: inline-block; width: 14px; height: 14px; background: radial-gradient(circle at 50% 40%, #ffe066 30%, #f0a500 70%, #cc7700 100%); border-radius: 50%; box-shadow: 0 0 4px rgba(255,200,0,0.5); }
+
+/* =====================================================
+   WINDOW
+   ===================================================== */
+.window { position: absolute; background: var(--xp-window-face); border-radius: 8px 8px 0 0; box-shadow: var(--window-shadow); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--xp-blue-bar-1); border-top: none; z-index: 10; min-width: 320px; min-height: 220px; font-family: var(--xp-ui); }
+.window.active { box-shadow: 0 8px 24px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.25); z-index: 50 !important; }
+.window.opening { animation: winOpen 0.18s ease-out; }
+@keyframes winOpen { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.window.closing { animation: winClose 0.12s ease-in forwards; }
+@keyframes winClose { to { transform: scale(0.94); opacity: 0; } }
+.window.minimized { display: none; }
+
+.window__titlebar { height: 28px; background: linear-gradient(180deg, #0a47a8 0%, #1957c5 8%, #2e75e0 30%, #3d8bf0 55%, #2c70d0 88%, #0a47a8 100%); border-bottom: 1px solid #0a47a8; border-radius: 8px 8px 0 0; display: flex; align-items: center; padding: 0 4px 0 6px; cursor: grab; user-select: none; flex-shrink: 0; color: #fff; position: relative; }
+.window__titlebar::before { content: ''; position: absolute; top: 1px; left: 4px; right: 4px; height: 1px; background: rgba(255,255,255,0.35); pointer-events: none; }
+.window__titlebar:active { cursor: grabbing; }
+.window:not(.active) .window__titlebar { background: linear-gradient(180deg, #6982bf 0%, #809cd2 25%, #94b0e0 60%, #7d96c6 100%); border-bottom-color: #6982bf; }
+.window__title { font-size: 11px; font-weight: 700; color: #fff; flex: 1; text-align: left; text-shadow: 1px 1px 1px rgba(0,0,0,0.5); padding: 0 8px; letter-spacing: 0.01em; display: flex; align-items: center; gap: 6px; order: 2; }
+.window__title::before { content: ''; display: inline-block; width: 14px; height: 14px; background: #fff; border: 1px solid #888; border-radius: 1px; flex-shrink: 0; background-image: linear-gradient(0deg, transparent 60%, #999 60%, #999 65%, transparent 65%, transparent 80%, #999 80%, #999 85%, transparent 85%); }
+.window__controls { display: flex; gap: 2px; order: 3; margin-left: auto; margin-right: 2px; }
+.win-btn { width: 22px; height: 22px; border-radius: 3px; cursor: pointer; border: 1px solid rgba(0,0,0,0.3); font-size: 12px; line-height: 18px; text-align: center; color: #fff; font-weight: 700; font-family: 'Tahoma', sans-serif; display: flex; align-items: center; justify-content: center; background: linear-gradient(180deg, #5e9bea 0%, #1d65d9 50%, #1957c5 100%); box-shadow: inset 1px 1px 0 rgba(255,255,255,0.35), inset -1px -1px 0 rgba(0,0,0,0.2); transition: filter 0.1s; }
+.win-btn:hover { filter: brightness(1.15); }
+.win-btn:active { filter: brightness(0.85); }
+.win-btn--close { background: linear-gradient(180deg, #f08d6b 0%, #c5391b 50%, #a82815 100%); }
+.win-btn--close::after { content: '✕'; font-size: 11px; }
+.win-btn--share::after { content: '⇪'; font-size: 13px; font-weight: 700; }
+.win-btn--max::after { content: '☐'; font-size: 12px; }
+.win-btn span { display: none; }
+.window__body { flex: 1; overflow: auto; background: var(--xp-window-content); }
+
+/* =====================================================
+   FILE BROWSER
+   ===================================================== */
+.fb { display: grid; grid-template-columns: 200px 1fr; height: 100%; font-family: var(--xp-ui); }
+.fb__sidebar { background: linear-gradient(180deg, #6dc1f9 0%, #4d8eea 100%); border-right: 1px solid #0a47a8; padding: 0; font-size: 11px; overflow-y: auto; color: #fff; }
+.fb__sidebar__h { background: linear-gradient(180deg, #2a7ce8 0%, #1957c5 100%); font-size: 11px; color: #fff; padding: 6px 12px; font-weight: 700; text-shadow: 1px 1px 1px rgba(0,0,0,0.4); border-bottom: 1px solid #0a47a8; }
+.fb__sidebar__item { padding: 5px 12px 5px 24px; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #fff; text-shadow: 1px 1px 1px rgba(0,0,0,0.3); font-size: 11px; }
+.fb__sidebar__item:hover { background: rgba(255,255,255,0.18); text-decoration: underline; }
+.fb__sidebar__item.active { background: rgba(255,255,255,0.25); font-weight: 700; }
+.fb__sidebar__dot { width: 14px; height: 12px; border-radius: 1px; flex-shrink: 0; background: #f6cf75; border: 1px solid #8d5a13; }
+.fb__main { padding: 0; background: #fff; }
+.fb__toolbar { display: flex; align-items: center; gap: 8px; padding: 4px 8px; background: linear-gradient(180deg, #f4f4ec 0%, #ece9d8 100%); border-bottom: 1px solid #aca899; font-size: 11px; color: #1a1a1a; font-family: var(--xp-ui); }
+.fb__toolbar__nav { display: flex; gap: 2px; }
+.fb__toolbar__btn { width: 26px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: linear-gradient(180deg, #fcfcf9 0%, #ece9d8 100%); border: 1px solid #aca899; border-radius: 2px; font-size: 13px; color: #1a1a1a; font-weight: 700; box-shadow: inset 1px 1px 0 rgba(255,255,255,0.6); }
+.fb__toolbar__btn:hover { background: linear-gradient(180deg, #fff 0%, #f0eddb 100%); border-color: #316ac5; }
+.fb__toolbar__path { flex: 1; background: #fff; border: 1px solid #7f9db9; padding: 3px 8px; font-family: var(--xp-ui); font-size: 11px; color: #1a1a1a; height: 22px; display: flex; align-items: center; }
+.fb__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 14px; padding: 16px; }
+.fb__item { display: flex; flex-direction: column; align-items: center; padding: 6px 6px 4px; border-radius: 2px; cursor: pointer; text-align: center; gap: 4px; border: 1px solid transparent; }
+.fb__item:hover { background: #e8f0fc; border: 1px dotted #316ac5; }
+.fb__item.selected { background: var(--xp-selection); border: 1px dotted #1a4ea0; color: #fff; }
+.fb__item.selected .fb__item__label { color: #fff; }
+.fb__item__art { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 24px; pointer-events: none; }
+.fb__item__label { font-family: var(--xp-ui); font-size: 11px; color: #000; line-height: 1.25; word-break: break-word; max-width: 100%; }
+.fb__item__thumb { width: 56px; height: 56px; background: linear-gradient(135deg, #6a4a8a 0%, #2a1a4a 100%); border-radius: 4px; position: relative; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 9px; font-family: var(--mono); box-shadow: 0 1px 3px rgba(0,0,0,0.2); overflow: hidden; }
+.fb__item__thumb img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.fb__item__thumb--video::after { content: ''; position: absolute; width: 0; height: 0; border-left: 12px solid rgba(255,255,255,0.9); border-top: 8px solid transparent; border-bottom: 8px solid transparent; margin-left: 3px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4)); }
+.fb__item__thumb--photo { background: linear-gradient(135deg, #ff9a4d 0%, #c93a00 100%); }
+.fb__item__thumb--photo::after { content: '◐'; font-size: 20px; }
+.fb__item__thumb--logo { background: var(--ink); font-weight: 800; font-size: 11px; letter-spacing: 0.1em; }
+.fb__item__thumb--font { background: #f5f3ee; color: var(--ink); font-family: Georgia, serif; font-size: 26px; font-weight: 900; font-style: italic; }
+.fb__item__thumb--book { background: linear-gradient(135deg, #2a6a4a 0%, #0d3a2a 100%); }
+.fb__item__thumb--book::after { content: '📖'; font-size: 22px; }
+.fb__grid--logos { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.fb__logo { background: #fff; aspect-ratio: 16/10; border-radius: 6px; display: flex; align-items: center; justify-content: center; padding: 16px; border: 1px solid rgba(0,0,0,0.08); position: relative; }
+.fb__logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.fb__logo__name { position: absolute; bottom: 4px; right: 6px; font-size: 9px; color: var(--grey-2); font-family: var(--mono); }
+
+/* When a thumb has a Drive image */
+.fb__item__thumb.has-image::after { display: none; }
+.fb__item__thumb.has-image { background: #111; }
+
+/* =====================================================
+   VIDEO PLAYER
+   ===================================================== */
+.player { display: grid; grid-template-columns: 1fr 220px; height: 100%; background: #0a0a0a; color: #fff; }
+.player__screen { background: #000; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.player__placeholder { font-family: var(--mono); font-size: 14px; color: rgba(255,255,255,0.4); text-align: center; padding: 40px; }
+.player__placeholder::before { content: '▶'; display: block; font-size: 64px; margin-bottom: 16px; color: rgba(255,255,255,0.2); }
+.player__video-embed { width: 100%; height: 100%; border: none; }
+.player__controls { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 20px; background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 100%); display: flex; align-items: center; gap: 14px; font-size: 12px; }
+.player__progress { flex: 1; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; cursor: pointer; position: relative; }
+.player__progress__bar { height: 100%; background: var(--accent-hot); border-radius: 2px; width: 35%; }
+.player__btn { font-size: 18px; cursor: pointer; opacity: 0.9; padding: 4px 8px; }
+.player__btn:hover { opacity: 1; }
+.player__playlist { background: #141414; border-left: 1px solid rgba(255,255,255,0.1); overflow-y: auto; padding: 12px 8px; }
+.player__playlist__h { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.45); padding: 4px 8px 8px; font-weight: 600; }
+.player__pl-item { padding: 8px 10px; font-size: 12px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.8); margin-bottom: 2px; }
+.player__pl-item:hover { background: rgba(255,255,255,0.08); }
+.player__pl-item.active { background: var(--accent); color: #fff; }
+.player__pl-item__num { font-family: var(--mono); font-size: 10px; opacity: 0.6; width: 16px; }
+
+/* =====================================================
+   PHOTO VIEWER
+   ===================================================== */
+.photo-v { background: #0a0a0a; height: 100%; display: flex; flex-direction: column; color: #fff; }
+.photo-v__stage { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding: 20px; }
+.photo-v__image { width: 100%; max-width: 70%; aspect-ratio: 4/3; background: linear-gradient(135deg, #6a4a8a 0%, #2a1a4a 100%); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); color: rgba(255,255,255,0.6); font-size: 14px; overflow: hidden; }
+.photo-v__image img { width: 100%; height: 100%; object-fit: contain; }
+.photo-v__nav { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; color: #fff; backdrop-filter: blur(8px); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.photo-v__nav:hover { background: rgba(255,255,255,0.2); }
+.photo-v__nav--prev { left: 12px; }
+.photo-v__nav--next { right: 12px; }
+.photo-v__bottom { padding: 12px 20px; font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.5); text-align: center; border-top: 1px solid rgba(255,255,255,0.08); }
+
+/* =====================================================
+   DOCUMENT / SHEET / BROWSER / SIMPLE / MORTGAGE
+   ===================================================== */
+.doc { display: grid; grid-template-columns: 200px 1fr; height: 100%; font-family: Georgia, 'Times New Roman', serif; }
+.doc__toc { background: rgba(0,0,0,0.04); border-right: 1px solid rgba(0,0,0,0.08); padding: 16px 12px; font-family: var(--sans); font-size: 12px; overflow-y: auto; }
+.doc__toc__h { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--grey-2); padding: 4px 8px 12px; font-weight: 600; }
+.doc__toc__item { padding: 6px 10px; border-radius: 4px; cursor: pointer; color: var(--grey-3); border-left: 2px solid transparent; margin-bottom: 2px; }
+.doc__toc__item:hover { background: rgba(0,0,0,0.05); }
+.doc__toc__item.active { border-left-color: var(--accent); color: var(--accent); font-weight: 600; }
+.doc__page { background: #fff; margin: 24px; padding: 40px 56px; border-radius: 2px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-y: auto; font-size: 14px; line-height: 1.7; color: #1a1a1a; }
+.doc__page h1 { font-size: 28px; margin-bottom: 8px; font-weight: 700; }
+.doc__page h2 { font-size: 19px; margin-top: 28px; margin-bottom: 10px; font-weight: 700; color: var(--accent); scroll-margin-top: 20px; }
+.doc__page h3 { font-size: 15px; margin-top: 16px; margin-bottom: 6px; font-weight: 600; }
+.doc__page p { margin-bottom: 12px; }
+.doc__page ul { margin-left: 24px; margin-bottom: 12px; }
+.doc__page li { margin-bottom: 4px; }
+.doc__page a { color: var(--accent); text-decoration: underline; cursor: pointer; }
+.doc__page a:hover { background: rgba(0,51,255,0.1); }
+.doc__page__meta { font-family: var(--mono); font-size: 11px; color: var(--grey-2); border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 12px; margin-bottom: 20px; }
+
+.sheet { display: flex; flex-direction: column; height: 100%; background: #fff; font-family: var(--sans); }
+.sheet__formula-bar { background: #f5f3ee; border-bottom: 1px solid rgba(0,0,0,0.1); padding: 6px 12px; display: flex; align-items: center; gap: 10px; font-size: 12px; font-family: var(--mono); }
+.sheet__formula-bar__cell { width: 60px; padding: 4px 8px; background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 3px; }
+.sheet__formula-bar__fx { color: var(--grey-2); font-style: italic; }
+.sheet__formula-bar__input { flex: 1; padding: 4px 8px; background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 3px; font-size: 12px; color: var(--grey-3); }
+.sheet__body { flex: 1; overflow: auto; }
+.sheet__table { border-collapse: collapse; width: 100%; font-size: 12px; }
+.sheet__table th, .sheet__table td { border: 1px solid #d4d4d4; padding: 6px 10px; text-align: left; min-width: 100px; }
+.sheet__table th { background: #f5f3ee; font-weight: 600; font-family: var(--mono); font-size: 11px; color: var(--grey-2); text-align: center; position: sticky; top: 0; }
+.sheet__table th.col { text-align: center; width: 32px; min-width: 32px; }
+.sheet__table tr:first-child td:first-child, .sheet__table th:first-child { background: #ebe9e2; text-align: center; font-family: var(--mono); font-size: 11px; color: var(--grey-2); font-weight: 600; width: 32px; min-width: 32px; }
+.sheet__table td.head { background: var(--accent); color: #fff; font-weight: 600; }
+.sheet__table td.num { font-family: var(--mono); text-align: right; font-weight: 600; color: var(--accent); }
+.sheet__table td.link { color: var(--accent); text-decoration: underline; cursor: pointer; }
+.sheet__table td.link:hover { background: rgba(0,51,255,0.08); }
+.sheet__tabs { background: #f5f3ee; border-top: 1px solid rgba(0,0,0,0.1); padding: 4px 8px 0; display: flex; gap: 2px; }
+.sheet__tab { padding: 6px 16px; font-size: 11px; cursor: pointer; border-radius: 4px 4px 0 0; color: var(--grey-3); font-family: var(--mono); }
+.sheet__tab.active { background: #fff; border: 1px solid rgba(0,0,0,0.1); border-bottom: none; color: var(--accent); font-weight: 600; }
+.sheet__tab:hover:not(.active) { background: rgba(0,0,0,0.04); }
+
+.browser { display: flex; flex-direction: column; height: 100%; background: #fff; }
+.browser__chrome { background: linear-gradient(180deg, #ebe9e2 0%, #d8d4cc 100%); border-bottom: 1px solid rgba(0,0,0,0.12); padding: 8px 12px; display: flex; align-items: center; gap: 8px; }
+.browser__nav { display: flex; gap: 4px; }
+.browser__nav__btn { width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--grey-3); font-size: 12px; }
+.browser__nav__btn:hover { background: rgba(0,0,0,0.1); }
+.browser__url { flex: 1; background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 100px; padding: 6px 14px; font-family: var(--mono); font-size: 12px; color: var(--grey-3); display: flex; align-items: center; gap: 8px; }
+.browser__url::before { content: '🔒'; font-size: 10px; }
+.browser__body { flex: 1; overflow-y: auto; padding: 32px; }
+.browser__platforms { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+.browser__platform { background: #f5f3ee; padding: 20px; border-radius: 8px; text-align: center; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
+.browser__platform:hover { border-color: var(--accent); transform: translateY(-2px); }
+.browser__platform__name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.browser__platform__handle { font-size: 12px; color: var(--grey-2); font-family: var(--mono); margin-bottom: 12px; }
+.browser__platform__cta { font-size: 11px; color: var(--accent); font-weight: 600; }
+
+.simple { padding: 32px 40px; font-size: 14px; line-height: 1.7; color: var(--grey-3); }
+.simple h1 { font-size: 24px; margin-bottom: 12px; color: var(--ink); }
+.simple h2 { font-size: 16px; margin-top: 24px; margin-bottom: 8px; color: var(--accent); }
+.simple p { margin-bottom: 10px; }
+
+.mortgage { padding: 28px 36px; display: flex; flex-direction: column; gap: 20px; }
+.mortgage__title { font-size: 20px; font-weight: 700; color: var(--ink); }
+.mortgage__body { font-size: 13px; line-height: 1.65; color: var(--grey-3); }
+.mortgage__progress { background: rgba(0,0,0,0.06); border-radius: 100px; height: 14px; overflow: hidden; }
+.mortgage__progress__bar { height: 100%; background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hot) 100%); border-radius: 100px; transition: width 0.8s ease; }
+.mortgage__stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px; }
+.mortgage__stat__num { font-size: 20px; font-weight: 800; color: var(--accent); font-family: var(--mono); }
+.mortgage__stat__label { color: var(--grey-2); margin-top: 2px; }
+.mortgage__donate { background: var(--accent); color: #fff; padding: 12px 24px; border-radius: 100px; font-size: 13px; font-weight: 600; text-align: center; cursor: pointer; transition: background 0.15s; }
+.mortgage__donate:hover { background: var(--accent-hot); }
+
+.merch-item { display: grid; grid-template-columns: 240px 1fr; height: 100%; }
+.merch-item__media { background: linear-gradient(135deg, #2a2a2a 0%, #0a0a0a 100%); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.4); font-family: var(--mono); font-size: 12px; overflow: hidden; }
+.merch-item__media img { width: 100%; height: 100%; object-fit: cover; }
+.merch-item__info { padding: 28px; display: flex; flex-direction: column; gap: 14px; }
+.merch-item__name { font-size: 22px; font-weight: 700; color: var(--ink); }
+.merch-item__price { font-size: 28px; font-weight: 800; color: var(--accent); font-family: var(--mono); }
+.merch-item__desc { font-size: 13px; line-height: 1.6; color: var(--grey-3); }
+.merch-item__buy { background: var(--accent); color: #fff; padding: 14px 28px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; align-self: flex-start; transition: background 0.15s; }
+.merch-item__buy:hover { background: var(--accent-hot); }
+
+.bin { padding: 24px; }
+.bin__hint { font-size: 11px; color: var(--grey-2); font-family: var(--mono); text-align: center; margin-bottom: 16px; }
+
+/* =====================================================
+   CONTEXT MENU
+   ===================================================== */
+.ctx-menu { position: fixed; background: rgba(245,243,238,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(0,0,0,0.1); border-radius: 6px; min-width: 200px; padding: 6px; box-shadow: 0 12px 36px rgba(0,0,0,0.3); color: var(--ink); z-index: 2000; display: none; }
+.ctx-menu.open { display: block; }
+.ctx-menu__item { padding: 8px 14px; font-size: 13px; border-radius: 4px; cursor: pointer; }
+.ctx-menu__item:hover { background: var(--accent); color: #fff; }
+.ctx-menu__sep { height: 1px; background: rgba(0,0,0,0.08); margin: 4px 6px; }
+
+/* =====================================================
+   SHARE MENU
+   ===================================================== */
+.share-menu { position: fixed; background: linear-gradient(180deg, #f5f6fa 0%, #d9e2f0 100%); border: 1px solid #0a47a8; border-radius: 6px; min-width: 200px; padding: 0; box-shadow: 0 8px 24px rgba(0,0,0,0.4); font-family: var(--xp-ui); z-index: 3000; display: none; overflow: hidden; }
+.share-menu.open { display: block; animation: shareOpen 0.15s ease-out; }
+@keyframes shareOpen { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+.share-menu__h { background: linear-gradient(180deg, #2c70d0 0%, #1957c5 50%, #0a47a8 100%); color: #fff; font-size: 11px; font-weight: 700; padding: 8px 12px; text-shadow: 1px 1px 1px rgba(0,0,0,0.4); letter-spacing: 0.02em; display: flex; align-items: center; justify-content: space-between; }
+.share-menu__h__close { cursor: pointer; width: 16px; height: 14px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 2px; font-size: 9px; line-height: 12px; text-align: center; }
+.share-menu__h__close:hover { background: #c5391b; }
+.share-menu__url { padding: 8px 12px; background: #fff; border-bottom: 1px solid #aca899; font-family: var(--mono); font-size: 11px; color: #1a4ea0; word-break: break-all; cursor: pointer; }
+.share-menu__url:hover { background: #f0f4fb; }
+.share-menu__items { padding: 4px 0; }
+.share-menu__item { padding: 8px 14px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; color: #1a1a1a; }
+.share-menu__item:hover { background: var(--xp-selection); color: #fff; }
+.share-menu__item__icon { width: 18px; height: 18px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; font-weight: 700; flex-shrink: 0; }
+.share-menu__item__icon--fb { background: #1877f2; }
+.share-menu__item__icon--tw { background: #1a1a1a; }
+.share-menu__item__icon--in { background: #0a66c2; }
+.share-menu__item__icon--wa { background: #25d366; }
+.share-menu__item__icon--tg { background: #2aabee; }
+.share-menu__item__icon--cp { background: #6a6a6a; }
+.share-menu__item__icon--em { background: #c5391b; }
+
+.toast { position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); background: rgba(20,20,20,0.95); color: #fff; padding: 12px 20px; border-radius: 100px; font-size: 13px; z-index: 5000; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* =====================================================
+   MOBILE
+   ===================================================== */
+@media (max-width: 768px), (pointer: coarse) {
+  .desktop, .taskbar, .menubar__items, .menubar__clock { display: none !important; }
+  .menubar { height: 44px; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; border: none; padding: 0 16px; justify-content: space-between; }
+  .menubar__logo { font-size: 14px; margin: 0; color: #fff; }
+  .menubar__right { gap: 8px; }
+  body { overflow-y: auto; }
+  html { overflow-y: auto; height: auto; }
+  .home { display: block; padding: 60px 20px 100px; min-height: 100vh; }
+  .home__title { color: #fff; font-size: 14px; font-weight: 500; text-align: center; margin: 10px 0 30px; opacity: 0.85; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+  .home__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px 12px; max-width: 480px; margin: 0 auto; }
+  .home__icon { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
+  .home__icon__art { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+  .home__icon__label { font-size: 11px; color: #fff; text-align: center; line-height: 1.2; text-shadow: 0 1px 2px rgba(0,0,0,0.5); max-width: 76px; word-wrap: break-word; }
+  .dock { position: fixed; bottom: 16px; left: 16px; right: 16px; background: rgba(255,255,255,0.18); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(255,255,255,0.2); border-radius: 24px; padding: 12px; display: flex; justify-content: space-around; z-index: 50; }
+  .dock__item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+  .dock__item__art { width: 44px; height: 44px; border-radius: 11px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+  .window { position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; border-radius: 0; z-index: 200 !important; }
+  .window__titlebar { height: 56px; padding: 0 16px; background: rgba(245,243,238,0.97); backdrop-filter: blur(20px); }
+  .window__controls { gap: 8px; }
+  .window__controls .win-btn { width: 44px; height: 44px; border-radius: 10px; background: rgba(0,0,0,0.07); color: var(--grey-3); border: none; box-shadow: none; display: flex; align-items: center; justify-content: center; }
+  .win-btn--close { width: 44px; height: 44px; background: rgba(0,0,0,0.07); color: var(--grey-3); border: none; box-shadow: none; }
+  .win-btn--close::after { content: none !important; }
+  .win-btn--close::before { content: '✕'; font-size: 18px; font-weight: 600; line-height: 1; }
+  .win-btn--share::after { content: none !important; }
+  .win-btn--share::before { content: '⇪'; font-size: 20px; font-weight: 700; line-height: 1; }
+  .win-btn--max::after { content: none !important; }
+  .win-btn--close span { display: none; }
+  .window__title { font-size: 15px; padding-right: 8px; }
+  .fb { grid-template-columns: 1fr; }
+  .fb__sidebar { display: none; }
+  .fb__sidebar.show { display: block; position: absolute; top: 0; left: 0; bottom: 0; width: 240px; z-index: 5; background: var(--window-bg); box-shadow: 4px 0 12px rgba(0,0,0,0.2); }
+  .fb__grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .photo-v__nav { width: 56px; height: 56px; font-size: 26px; }
+  .photo-v__nav--prev { left: 8px; }
+  .photo-v__nav--next { right: 8px; }
+  .player { grid-template-columns: 1fr; grid-template-rows: 240px 1fr; }
+  .player__playlist { border-left: none; border-top: 1px solid rgba(255,255,255,0.1); }
+  .doc { grid-template-columns: 1fr; }
+  .doc__toc { display: none; }
+  .doc__page { margin: 12px; padding: 24px 20px; font-size: 14px; }
+  .merch-item { grid-template-columns: 1fr; grid-template-rows: 200px 1fr; }
+  .merch-item__info { padding: 20px; }
+  .browser__body { padding: 20px; }
+  .browser__platforms { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ctx-menu { display: none !important; }
+  .dropdown.open { position: fixed; top: auto !important; bottom: 0; left: 0; right: 0; width: 100%; border-radius: 16px 16px 0 0; padding: 12px; animation: sheetUp 0.25s ease-out; z-index: 1500; }
+  @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .dropdown__item { padding: 14px 16px; font-size: 15px; }
+}
+
+@media (min-width: 769px) and (pointer: fine) {
+  .home, .dock { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay">
+  <div class="loading__logo">64</div>
+  <div class="loading__bar"><div class="loading__bar__fill"></div></div>
+  <div class="loading__text" id="loadingText">იტვირთება კონტენტი...</div>
+</div>
+
+<!-- TOP MENU BAR -->
+<div class="menubar" id="menubar">
+  <div class="menubar__logo" id="brandMenu">64</div>
+  <div class="menubar__items">
+    <div class="menubar__item" data-menu="about">ჩვენ შესახებ</div>
+    <div class="menubar__item" data-menu="platforms">პლატფორმები</div>
+    <div class="menubar__item" data-menu="register">რეგისტრაცია</div>
+    <div class="menubar__item" data-menu="contact">კონტაქტი</div>
+  </div>
+  <div class="menubar__right">
+    <span class="menubar__clock" id="clock">--:--</span>
+    <button class="menubar__lang">KA</button>
+  </div>
+</div>
+
+<!-- Brand dropdown -->
+<div class="dropdown" id="dropdown-brand" style="left: 8px;">
+  <div class="dropdown__item" data-app="about-window">ჩვენ შესახებ</div>
+  <div class="dropdown__item dropdown__item--has-sub" id="platformsMenuBtn">
+    ჩვენი პლატფორმები <span class="dropdown__arrow">▶</span>
+    <div class="dropdown__sub" id="platformsSubMenu">
+      <!-- populated from CMS -->
+    </div>
+  </div>
+  <div class="dropdown__sep"></div>
+  <div class="dropdown__item" data-app="register-window">რეგისტრაცია</div>
+  <div class="dropdown__item" data-app="contact-window">კონტაქტი</div>
+  <div class="dropdown__sep"></div>
+  <div class="dropdown__item" onclick="window.location.href='index.html'">↩ მთავარ საიტზე დაბრუნება</div>
+</div>
+
+<!-- DESKTOP -->
+<div class="desktop" id="desktop"></div>
+
+<!-- MOBILE HOME -->
+<div class="home" id="home">
+  <div class="home__title">64 / LAB</div>
+  <div class="home__grid" id="homeGrid"></div>
+</div>
+
+<!-- MOBILE DOCK -->
+<div class="dock" id="dock">
+  <div class="dock__item" data-app="services">
+    <div class="dock__item__art ico-doc"><div class="ico-doc__lines"></div><div class="ico-doc__W">W</div></div>
+  </div>
+  <div class="dock__item" data-app="portfolio">
+    <div class="dock__item__art ico-folder ico-folder--blue"></div>
+  </div>
+  <div class="dock__item" data-app="contact-window">
+    <div class="dock__item__art ico-browser"></div>
+  </div>
+  <div class="dock__item" data-app="about-window">
+    <div class="dock__item__art ico-doc"><div class="ico-doc__lines"></div><div class="ico-doc__W ico-doc__readme">i</div></div>
+  </div>
+</div>
+
+<!-- TASKBAR -->
+<div class="taskbar" id="taskbar">
+  <div class="taskbar__brand" id="startBtn">start</div>
+  <div class="taskbar__items" id="taskbarItems"></div>
+  <div class="taskbar__hint" id="trayClock">--:--</div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-menu__item" data-app="about-window">ჩვენ შესახებ</div>
+  <div class="ctx-menu__sep"></div>
+  <div class="ctx-menu__item" data-app="register-window">რეგისტრაცია</div>
+  <div class="ctx-menu__item" data-app="contact-window">კონტაქტი</div>
+  <div class="ctx-menu__sep"></div>
+  <div class="ctx-menu__item" onclick="window.location.href='index.html'">↩ მთავარ საიტზე</div>
+</div>
+
+<!-- SHARE MENU -->
+<div class="share-menu" id="shareMenu">
+  <div class="share-menu__h">Share window<div class="share-menu__h__close" id="shareMenuClose">✕</div></div>
+  <div class="share-menu__url" id="shareMenuUrl">https://...</div>
+  <div class="share-menu__items">
+    <div class="share-menu__item" data-share="copy"><div class="share-menu__item__icon share-menu__item__icon--cp">⇪</div>ბმულის კოპირება</div>
+    <div class="share-menu__item" data-share="facebook"><div class="share-menu__item__icon share-menu__item__icon--fb">f</div>Facebook</div>
+    <div class="share-menu__item" data-share="twitter"><div class="share-menu__item__icon share-menu__item__icon--tw">𝕏</div>X / Twitter</div>
+    <div class="share-menu__item" data-share="linkedin"><div class="share-menu__item__icon share-menu__item__icon--in">in</div>LinkedIn</div>
+    <div class="share-menu__item" data-share="whatsapp"><div class="share-menu__item__icon share-menu__item__icon--wa">W</div>WhatsApp</div>
+    <div class="share-menu__item" data-share="telegram"><div class="share-menu__item__icon share-menu__item__icon--tg">T</div>Telegram</div>
+    <div class="share-menu__item" data-share="email"><div class="share-menu__item__icon share-menu__item__icon--em">@</div>ელ-ფოსტა</div>
+  </div>
+</div>
+
+<div class="toast" id="toast">ბმული დაკოპირდა</div>
+
+<script>
+/* =====================================================
+   AUTH GUARD — redirect to index.html if not logged in
+   ===================================================== */
+(function() {
+  if (sessionStorage.getItem('64lab_auth') !== 'ok') {
+    window.location.replace('index.html');
+  }
+})();
+
+/* =====================================================
+   CONTENT.JSON CONFIG
+   ===================================================== */
+const CONTENT_URL = 'content.json';
+
+/* =====================================================
+   CMS STATE
+   ===================================================== */
+let CMS = null;
+
+const DEFAULTS = {
+  settings: { bg_sky_top: '#2e7ad9', bg_sky_mid: '#4f9fdf', bg_hill_1: '#5a8d3a', bg_hill_2: '#3a6b1e', wallpaper_url: '' },
+  about:    { title: 'რა არის 64?', mission: '', history: '', vision: '' },
+  contact:  { email: 'contact@64-studio.com', phone: '+995 XXX XX XX XX', address: '8 ბაქოს ქუჩა, თბილისი' },
+  mortgage: { months_left: '?', amount_left: '?', progress_pct: 38, patreon_url: '#' },
+  platforms: [],
+  audience:  [],
+  services:  [],
+  showreel:  [],
+  clients:   [],
+  videos:    [],
+  photos:    [],
+  merch:     [],
+  bin:       [],
+};
+  ],
+  merch: [
+    { label: '64 T-Shirt', price: '45₾', desc: 'სტუდია 64-ის ოფიციალური მერჩი.', drive_id: '' },
+    { label: '64 Hoodie', price: '75₾', desc: 'სტუდია 64-ის ოფიციალური მერჩი.', drive_id: '' },
+    { label: '64 Cap', price: '35₾', desc: 'სტუდია 64-ის ოფიციალური მერჩი.', drive_id: '' },
+  ],
+  bin: [
+    { label: 'old_logo_v1_FINAL_FINAL.psd', icon: '📄' },
+    { label: 'budget_2024_DO_NOT_OPEN.xlsx', icon: '📊' },
+    { label: 'client_feedback_round_27.docx', icon: '📝' },
+    { label: 'meeting_notes_2am.txt', icon: '📋' },
+  ],
+};
+
+/* =====================================================
+   FETCH CMS DATA
+   ===================================================== */
+async function loadCMS() {
+  setLoadingText('კონტენტი იტვირთება...');
+  try {
+    const resp = await fetch(CONTENT_URL + '?t=' + Date.now());
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    CMS = await resp.json();
+    setLoadingText('კონტენტი ჩაიტვირთა ✓');
+  } catch (e) {
+    console.warn('content.json load failed, using defaults:', e.message);
+    CMS = JSON.parse(JSON.stringify(DEFAULTS));
+    setLoadingText('ჩატვირთვა ლოკალური მონაცემებით...');
+  }
+  applySettings();
+}
+
+function setLoadingText(t) {
+  const el = document.getElementById('loadingText');
+  if (el) el.textContent = t;
+}
+
+function cmsGet(section, key, fallback = '') {
+  if (!CMS || !CMS[section]) return fallback;
+  const val = CMS[section][key];
+  return (val !== undefined && val !== null) ? String(val) : fallback;
+}
+
+function cmsRows(section) {
+  if (CMS && CMS[section] !== undefined) {
+    return Array.isArray(CMS[section]) ? CMS[section] : [];
+  }
+  return DEFAULTS[section] || [];
+}
+
+/* =====================================================
+   APPLY SETTINGS (background colors / wallpaper)
+   ===================================================== */
+function applySettings() {
+  const s = (CMS && CMS.settings) ? CMS.settings : DEFAULTS.settings;
+  const wallUrl = s.wallpaper_url || '';
+  if (wallUrl) {
+    document.body.style.setProperty('--wallpaper-url', `url(${wallUrl})`);
+    document.body.classList.add('has-wallpaper');
+  } else {
+    document.body.classList.remove('has-wallpaper');
+    document.documentElement.style.setProperty('--bg-sky-top', s.bg_sky_top || '#2e7ad9');
+    document.documentElement.style.setProperty('--bg-sky-mid', s.bg_sky_mid || '#4f9fdf');
+    document.documentElement.style.setProperty('--bg-hill-1',  s.bg_hill_1  || '#5a8d3a');
+    document.documentElement.style.setProperty('--bg-hill-2',  s.bg_hill_2  || '#3a6b1e');
+  }
+}
+
+/* =====================================================
+   APP REGISTRY — built dynamically from CMS
+   ===================================================== */
+function buildAPPS() {
+  const videos = cmsRows('videos');
+  const photos = cmsRows('photos');
+  const merch  = cmsRows('merch');
+
+  return {
+    'portfolio': {
+      title: 'Portfolio',
+      iconClass: 'ico-folder ico-folder--blue',
+      isFolder: true,
+      pos: { x: 40, y: 30 },
+      size: { w: 820, h: 540 },
+      render: () => renderFolder('portfolio', [
+        { id: 'portfolio/videos', label: 'Videos', icon: 'ico-folder ico-folder--purple' },
+        { id: 'portfolio/photos', label: 'Photos', icon: 'ico-folder ico-folder--green' },
+        { id: 'portfolio/logos', label: 'Logos', icon: 'ico-folder ico-folder--gold' },
+        { id: 'portfolio/fonts', label: 'Fonts', icon: 'ico-folder ico-folder--red' },
+        { id: 'portfolio/brandbooks', label: 'Brandbooks', icon: 'ico-folder ico-folder--purple' },
+        { id: 'portfolio/clients', label: 'Our Clients', icon: 'ico-folder ico-folder--blue' },
+      ]),
+    },
+    'portfolio/videos': {
+      title: 'Portfolio / Videos',
+      iconClass: 'ico-folder ico-folder--purple',
+      isFolder: true,
+      parent: 'portfolio',
+      render: () => renderFolder('portfolio/videos',
+        videos.map((v, i) => ({ id: `video:${i+1}`, label: v.label, icon: 'thumb-video', _data: v })),
+      'video'),
+    },
+    'portfolio/photos': {
+      title: 'Portfolio / Photos',
+      iconClass: 'ico-folder ico-folder--green',
+      isFolder: true,
+      parent: 'portfolio',
+      render: () => renderFolder('portfolio/photos',
+        photos.map((p, i) => ({ id: `photo:${i+1}`, label: p.label, icon: p.url ? 'thumb-photo-cms' : 'thumb-photo', _data: p })),
+      'photo'),
+    },
+    'portfolio/logos': {
+      title: 'Portfolio / Logos',
+      iconClass: 'ico-folder ico-folder--gold',
+      isFolder: true,
+      parent: 'portfolio',
+      render: () => renderFolder('portfolio/logos', [
+        { id: 'logo:1', label: 'Brand Mark 01', icon: 'thumb-logo', text: '64' },
+        { id: 'logo:2', label: 'Brand Mark 02', icon: 'thumb-logo', text: 'STUDIO' },
+        { id: 'logo:3', label: 'Brand Mark 03', icon: 'thumb-logo', text: 'PSQM' },
+      ], 'logo'),
+    },
+    'portfolio/fonts': {
+      title: 'Portfolio / Fonts',
+      iconClass: 'ico-folder ico-folder--red',
+      isFolder: true,
+      parent: 'portfolio',
+      render: () => renderFolder('portfolio/fonts', [
+        { id: 'font:1', label: 'Aa — Display Bold', icon: 'thumb-font' },
+        { id: 'font:2', label: 'Aa — Editorial Serif', icon: 'thumb-font' },
+        { id: 'font:3', label: 'Aa — Georgian Custom', icon: 'thumb-font' },
+      ], 'font'),
+    },
+    'portfolio/brandbooks': {
+      title: 'Portfolio / Brandbooks',
+      iconClass: 'ico-folder ico-folder--purple',
+      isFolder: true,
+      parent: 'portfolio',
+      render: () => renderFolder('portfolio/brandbooks', [
+        { id: 'book:1', label: 'TBC Brandbook.pdf', icon: 'thumb-book' },
+        { id: 'book:2', label: 'Tegeta Identity.pdf', icon: 'thumb-book' },
+        { id: 'book:3', label: 'Studio 64 Standards.pdf', icon: 'thumb-book' },
+      ], 'book'),
+    },
+    'portfolio/clients': {
+      title: 'Portfolio / Our Clients',
+      iconClass: 'ico-folder ico-folder--blue',
+      isFolder: true,
+      parent: 'portfolio',
+      render: () => renderClientsFolder(),
+    },
+    'myfiles': {
+      title: 'My Files',
+      iconClass: 'ico-folder ico-folder--gold',
+      isFolder: true,
+      pos: { x: 40, y: 170 },
+      size: { w: 720, h: 480 },
+      render: () => renderFolder('myfiles', [
+        { id: 'myfiles/team', label: 'Team', icon: 'ico-folder ico-folder--green' },
+        { id: 'myfiles/process', label: 'Work Process', icon: 'ico-folder ico-folder--purple' },
+        { id: 'myfiles/videos', label: 'My Videos', icon: 'ico-folder ico-folder--red' },
+        { id: 'myfiles/gear', label: 'Equipment', icon: 'ico-folder ico-folder--gold' },
+      ]),
+    },
+    'myfiles/team': { title: 'My Files / Team', iconClass: 'ico-folder ico-folder--green', isFolder: true, parent: 'myfiles', render: () => renderFolder('myfiles/team', Array.from({length:12},(_,i)=>({id:`team:${i+1}`,label:`Team Member ${String(i+1).padStart(2,'0')}.jpg`,icon:'thumb-photo'})),'photo') },
+    'myfiles/process': { title: 'My Files / Work Process', iconClass: 'ico-folder ico-folder--purple', isFolder: true, parent: 'myfiles', render: () => renderFolder('myfiles/process', Array.from({length:8},(_,i)=>({id:`process:${i+1}`,label:`Behind the Scenes ${String(i+1).padStart(2,'0')}.jpg`,icon:'thumb-photo'})),'photo') },
+    'myfiles/videos': { title: 'My Files / My Videos', iconClass: 'ico-folder ico-folder--red', isFolder: true, parent: 'myfiles', render: () => renderFolder('myfiles/videos', Array.from({length:6},(_,i)=>({id:`myvid:${i+1}`,label:`Process Reel ${String(i+1).padStart(2,'0')}.mp4`,icon:'thumb-video'})),'video') },
+    'myfiles/gear': { title: 'My Files / Equipment', iconClass: 'ico-folder ico-folder--gold', isFolder: true, parent: 'myfiles', render: () => renderFolder('myfiles/gear', Array.from({length:9},(_,i)=>({id:`gear:${i+1}`,label:`Equipment ${String(i+1).padStart(2,'0')}.jpg`,icon:'thumb-photo'})),'photo') },
+    'merch': {
+      title: 'Merch',
+      iconClass: 'ico-folder ico-folder--red',
+      isFolder: true,
+      pos: { x: 40, y: 310 },
+      size: { w: 720, h: 480 },
+      render: () => renderFolder('merch',
+        merch.map((m, i) => ({ id: `merch:${i}`, label: m.label + '.jpg', icon: 'thumb-photo', _data: m })),
+      'merch'),
+    },
+    'services': {
+      title: 'services.docx',
+      iconClass: 'ico-doc',
+      iconExtra: '<div class="ico-doc__lines"></div><div class="ico-doc__W">W</div>',
+      pos: { x: 200, y: 30 },
+      size: { w: 780, h: 560 },
+      render: () => renderServicesDoc(),
+    },
+    'audience': {
+      title: 'audience.xlsx',
+      iconClass: 'ico-doc',
+      iconExtra: '<div class="ico-doc__lines"></div><div class="ico-doc__W ico-doc__X">X</div>',
+      pos: { x: 200, y: 170 },
+      size: { w: 820, h: 540 },
+      render: () => renderAudienceSheet(),
+    },
+    'mysites': {
+      title: 'My Sites',
+      iconClass: 'ico-browser',
+      pos: { x: 200, y: 310 },
+      size: { w: 780, h: 540 },
+      render: () => renderBrowser(),
+    },
+    'about-window': {
+      title: 'whatis64.txt',
+      iconClass: 'ico-doc',
+      iconExtra: '<div class="ico-doc__lines"></div><div class="ico-doc__W ico-doc__readme">i</div>',
+      pos: { x: 360, y: 30 },
+      size: { w: 560, h: 460 },
+      render: () => renderAbout(),
+    },
+    'mortgage': {
+      title: 'office_mortgage.app',
+      iconClass: 'ico-piggy',
+      pos: { x: 360, y: 170 },
+      size: { w: 480, h: 380 },
+      render: () => renderMortgage(),
+    },
+    'showreel': {
+      title: 'Showreel.mp4',
+      iconClass: 'ico-video',
+      pos: { x: 360, y: 310 },
+      size: { w: 860, h: 540 },
+      render: () => renderPlayer('showreel'),
+    },
+    'recyclebin': {
+      title: 'Recycle Bin',
+      iconClass: 'ico-trash',
+      pos: { x: 520, y: 30 },
+      size: { w: 520, h: 380 },
+      render: () => renderBin(),
+    },
+    'contact-window': { title: 'contact.txt', iconClass: 'ico-doc', iconExtra: '<div class="ico-doc__lines"></div><div class="ico-doc__W" style="background:#0a0a0a;">@</div>', size: { w: 480, h: 420 }, render: () => renderContact() },
+    'register-window': { title: 'register.app', iconClass: 'ico-browser', size: { w: 440, h: 460 }, render: () => renderRegister() },
+  };
+}
+
+let APPS = {};
+
+/* =====================================================
+   RENDERERS — driven by CMS data
+   ===================================================== */
+function renderFolder(currentId, items, mode = 'folder') {
+  const path = currentId.replace(/\//g, ' / ');
+  const sidebarItems = [
+    { id: 'portfolio', label: 'Portfolio', dot: 'var(--accent)' },
+    { id: 'myfiles', label: 'My Files', dot: '#c99a00' },
+    { id: 'merch', label: 'Merch', dot: '#d92d2d' },
+  ];
+  const sidebar = `
+    <div class="fb__sidebar">
+      <div class="fb__sidebar__h">QUICK ACCESS</div>
+      ${sidebarItems.map(s => `
+        <div class="fb__sidebar__item ${currentId.startsWith(s.id) ? 'active' : ''}" data-open="${s.id}">
+          <div class="fb__sidebar__dot" style="background: ${s.dot};"></div>${s.label}
+        </div>`).join('')}
+      <div class="fb__sidebar__h" style="margin-top:16px;">FILES</div>
+      <div class="fb__sidebar__item" data-open="services"><div class="fb__sidebar__dot" style="background:#2b579a;"></div>services.docx</div>
+      <div class="fb__sidebar__item" data-open="audience"><div class="fb__sidebar__dot" style="background:#1d6f42;"></div>audience.xlsx</div>
+      <div class="fb__sidebar__item" data-open="about-window"><div class="fb__sidebar__dot" style="background:#6a6a6a;"></div>whatis64.txt</div>
+    </div>`;
+
+  const grid = `
+    <div class="fb__main">
+      <div class="fb__toolbar">
+        <div class="fb__toolbar__nav">
+          <div class="fb__toolbar__btn" data-back title="Back">←</div>
+          <div class="fb__toolbar__btn">→</div>
+        </div>
+        <div class="fb__toolbar__path">📁 ~/64-studio/${path}</div>
+      </div>
+      <div class="fb__grid">
+        ${items.map(it => fileItemHTML(it, mode)).join('')}
+      </div>
+    </div>`;
+
+  return `<div class="fb">${sidebar}${grid}</div>`;
+}
+
+function fileItemHTML(it, mode) {
+  let art;
+  if (it.icon === 'thumb-photo-cms' && it._data && it._data.url) {
+    art = `<div class="fb__item__thumb has-image"><img src="${it._data.url}" alt="${it.label}" loading="lazy"></div>`;
+  } else if (it.icon.startsWith('thumb-')) {
+    const cls = it.icon.replace('thumb-', '');
+    art = `<div class="fb__item__thumb fb__item__thumb--${cls}">${it.text || ''}</div>`;
+  } else {
+    art = `<div class="${it.icon}"></div>`;
+  }
+  return `<div class="fb__item" data-open="${it.id}">${art}<div class="fb__item__label">${it.label}</div></div>`;
+}
+
+function renderClientsFolder() {
+  const clients = cmsRows('clients');
+  return `
+    <div class="fb">
+      <div class="fb__sidebar">
+        <div class="fb__sidebar__h">QUICK ACCESS</div>
+        <div class="fb__sidebar__item active"><div class="fb__sidebar__dot" style="background:var(--accent);"></div>Portfolio</div>
+      </div>
+      <div class="fb__main">
+        <div class="fb__toolbar">
+          <div class="fb__toolbar__nav"><div class="fb__toolbar__btn" data-back>←</div></div>
+          <div class="fb__toolbar__path">📁 ~/64-studio/portfolio/clients · ${clients.length} items</div>
+        </div>
+        <div class="fb__grid fb__grid--logos">
+          ${clients.map(c => `
+            <div class="fb__logo" style="${c.dark ? 'background:var(--ink);' : ''}">
+              <img src="${c.logo_url || ''}" alt="${c.name}" style="${c.dark ? 'filter:brightness(0) invert(1);opacity:0.95;' : ''}">
+              <span class="fb__logo__name">${c.name}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderServicesDoc() {
+  const services = cmsRows('services');
+  const tocItems = services.map(s => `<div class="doc__toc__item" data-scroll="${s.id}">${s.title}</div>`).join('');
+  const sections = services.map(s => `
+    <h2 id="${s.id}">${s.title}</h2>
+    <ul>${(s.items || '').split('\n').filter(Boolean).map(i => `<li>${i.trim()}</li>`).join('')}</ul>
+    ${s.price ? `<p>ფასი: <strong>${s.price}</strong></p>` : ''}
+  `).join('');
+
+  return `
+    <div class="doc">
+      <div class="doc__toc">
+        <div class="doc__toc__h">Contents</div>
+        ${tocItems}
+      </div>
+      <div class="doc__page">
+        <div class="doc__page__meta">~/64-studio/services.docx · last edited today</div>
+        <h1>64 / Services</h1>
+        <p style="font-style:italic;color:#666;">სტუდია 64-ის სრული მომსახურების ჩამონათვალი.</p>
+        ${sections}
+        <p style="margin-top:40px;font-size:12px;color:#999;border-top:1px solid #eee;padding-top:16px;">დაგვიკავშირდი: <a data-open="contact-window">contact@64-studio.com</a></p>
+      </div>
+    </div>`;
+}
+
+function renderAudienceSheet() {
+  const rows = cmsRows('audience');
+  const tableRows = rows.map((r, i) => `
+    <tr><td>${i+2}</td><td>${r.platform}</td><td class="num">${r.subscribers}</td><td class="num">${r.views}</td><td class="num">${r.engagement}</td><td class="link" data-platform="${r.key || r.platform.toLowerCase()}">→ open</td></tr>
+  `).join('');
+
+  return `
+    <div class="sheet">
+      <div class="sheet__formula-bar">
+        <div class="sheet__formula-bar__cell">A1</div>
+        <span class="sheet__formula-bar__fx">fx</span>
+        <div class="sheet__formula-bar__input">SUMMARY · Cross-Platform Performance</div>
+      </div>
+      <div class="sheet__body">
+        <table class="sheet__table">
+          <thead><tr><th class="col"></th><th class="col">A</th><th class="col">B</th><th class="col">C</th><th class="col">D</th><th class="col">E</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td class="head">Platform</td><td class="head">Subscribers</td><td class="head">Total Views</td><td class="head">Engagement</td><td class="head">Link</td></tr>
+            ${tableRows}
+          </tbody>
+        </table>
+      </div>
+      <div class="sheet__tabs">
+        <div class="sheet__tab active">Summary</div>
+        ${rows.map(r => `<div class="sheet__tab">${r.platform}</div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderBrowser() {
+  const platforms = cmsRows('platforms');
+  return `
+    <div class="browser">
+      <div class="browser__chrome">
+        <div class="browser__nav">
+          <div class="browser__nav__btn">←</div><div class="browser__nav__btn">→</div><div class="browser__nav__btn">↻</div>
+        </div>
+        <div class="browser__url">64-studio.com/platforms</div>
+      </div>
+      <div class="browser__body">
+        <h2 style="margin-bottom:8px;font-size:20px;">ჩვენი ციფრული პლატფორმები</h2>
+        <p style="font-size:13px;color:var(--grey-2);margin-bottom:24px;">აირჩიე პლატფორმა</p>
+        <div class="browser__platforms">
+          ${platforms.map(p => `
+            <div class="browser__platform" onclick="window.open('${p.url}','_blank')">
+              <div class="browser__platform__name">${p.name}</div>
+              <div class="browser__platform__handle">${p.handle}</div>
+              <div class="browser__platform__cta">Open →</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderAbout() {
+  const a = (CMS && CMS.about) ? CMS.about : DEFAULTS.about;
+  return `
+    <div class="simple">
+      <h1>${a.title || 'რა არის 64?'}</h1>
+      <p style="font-style:italic;color:var(--grey-2);">~/64-studio/whatis64.txt · 2021–present</p>
+      <h2>მისია</h2><p>${a.mission || ''}</p>
+      <h2>ისტორია</h2><p>${a.history || ''}</p>
+      <h2>ხედვა</h2><p>${a.vision || ''}</p>
+    </div>`;
+}
+
+function renderMortgage() {
+  const m = (CMS && CMS.mortgage) ? CMS.mortgage : DEFAULTS.mortgage;
+  const pct = parseInt(m.progress_pct) || 38;
+  return `
+    <div class="mortgage">
+      <div class="mortgage__title">🐷 ოფისის იპოთეკის დახმარება</div>
+      <p class="mortgage__body">ჩვენი თბილისური ოფისი — 8 ბაქოს ქუჩაზე — ჩვენი მთლიანი ოპერაციის გული.</p>
+      <div class="mortgage__progress"><div class="mortgage__progress__bar" style="width:${pct}%"></div></div>
+      <div class="mortgage__stats">
+        <div><div class="mortgage__stat__num">${m.months_left} თვე</div><div class="mortgage__stat__label">დარჩენილი ვადა</div></div>
+        <div><div class="mortgage__stat__num">${m.amount_left}₾</div><div class="mortgage__stat__label">დარჩენილი თანხა</div></div>
+      </div>
+      <p class="mortgage__body" style="font-size:12px;">მხარი დაგვიჭირე Patreon-ზე!</p>
+      <div class="mortgage__donate" onclick="window.open('${m.patreon_url}','_blank')">Patreon-ზე გადასვლა →</div>
+    </div>`;
+}
+
+function renderPlayer(playlistId) {
+  const tracks = playlistId === 'showreel' ? cmsRows('showreel') : [{ title: 'Track placeholder', youtube_id: '' }];
+  return `
+    <div class="player">
+      <div class="player__screen">
+        ${tracks[0] && tracks[0].youtube_id
+          ? `<iframe class="player__video-embed" src="https://www.youtube.com/embed/${tracks[0].youtube_id}" allow="autoplay; fullscreen" allowfullscreen></iframe>`
+          : `<div class="player__placeholder">[ Video Player ]<br><span style="font-size:11px;opacity:0.6;">${tracks[0]?.title || ''}</span></div>`}
+      </div>
+      <div class="player__playlist">
+        <div class="player__playlist__h">Playlist · ${tracks.length} tracks</div>
+        ${tracks.map((t,i) => `<div class="player__pl-item ${i===0?'active':''}"><span class="player__pl-item__num">${String(i+1).padStart(2,'0')}</span>${t.title}</div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderPhotoViewer(label, idx, total) {
+  const photos = cmsRows('photos');
+  const p = photos[idx];
+  const imgHtml = p && p.url
+    ? `<img src="${p.url}" alt="${label}">`
+    : `[ ${label} ]`;
+  return `
+    <div class="photo-v">
+      <div class="photo-v__stage">
+        <div class="photo-v__nav photo-v__nav--prev">‹</div>
+        <div class="photo-v__image">${imgHtml}</div>
+        <div class="photo-v__nav photo-v__nav--next">›</div>
+      </div>
+      <div class="photo-v__bottom">${idx+1} / ${total} · ${label}</div>
+    </div>`;
+}
+
+function renderMerchItem(idx) {
+  const merch = cmsRows('merch');
+  const m = merch[idx] || merch[0] || { label: 'Merch', price: '45₾', desc: '', img_url: '' };
+  return `
+    <div class="merch-item">
+      <div class="merch-item__media">
+        ${m.img_url ? `<img src="${m.img_url}" alt="${m.label}">` : `[ ${m.label} ]`}
+      </div>
+      <div class="merch-item__info">
+        <div class="merch-item__name">${m.label}</div>
+        <div class="merch-item__price">${m.price}</div>
+        <div class="merch-item__desc">${m.desc}</div>
+        <div class="merch-item__buy" onclick="alert('ონლაინ მაღაზია მალე გაიხსნება')">ყიდვა →</div>
+      </div>
+    </div>`;
+}
+
+function renderBin() {
+  const items = cmsRows('bin');
+  return `
+    <div class="bin">
+      <div class="bin__hint">// ნაგვის ყუთი · ${items.length} ფაილი</div>
+      <div class="fb__grid">
+        ${items.map(i => `
+          <div class="fb__item" style="cursor:not-allowed;opacity:0.5;">
+            <div class="fb__item__art" style="font-size:32px;">${i.icon}</div>
+            <div class="fb__item__label">${i.label}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderContact() {
+  const c = (CMS && CMS.contact) ? CMS.contact : DEFAULTS.contact;
+  return `
+    <div class="simple">
+      <h1>📞 კონტაქტი</h1>
+      <p style="font-style:italic;color:var(--grey-2);">~/64-studio/contact.txt</p>
+      <h2>ელ-ფოსტა</h2><p><a href="mailto:${c.email}" style="color:var(--accent);">${c.email}</a></p>
+      <h2>ტელეფონი</h2><p>${c.phone}</p>
+      <h2>სტუდია</h2><p>${c.address}</p>
+      <p style="margin-top:24px;"><a href="index.html" style="color:var(--accent);">↩ მთავარ საიტზე</a></p>
+    </div>`;
+}
+
+function renderRegister() {
+  return `
+    <div class="simple">
+      <h1>👤 რეგისტრაცია</h1>
+      <p style="color:var(--grey-2);font-size:13px;">დარეგისტრირდი 64-ის ეკოსისტემაში.</p>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-top:24px;">
+        <div style="padding:12px;border:1px solid #ddd;border-radius:6px;text-align:center;cursor:pointer;">📧 ელ-ფოსტით</div>
+        <div style="padding:12px;border:1px solid #ddd;border-radius:6px;text-align:center;cursor:pointer;">G Google-ით</div>
+      </div>
+    </div>`;
+}
+
+/* =====================================================
+   PLATFORMS SUBMENU — populated from CMS
+   ===================================================== */
+function buildPlatformsSubmenu() {
+  const platforms = cmsRows('platforms');
+  const sub = document.getElementById('platformsSubMenu');
+  if (!sub) return;
+  sub.innerHTML = platforms.map(p =>
+    `<div class="dropdown__item" onclick="window.open('${p.url}','_blank')">${p.name}</div>`
+  ).join('');
+}
+
+/* =====================================================
+   WINDOW MANAGER
+   ===================================================== */
+const openWindows = new Map();
+let zCounter = 10;
+let dragState = null;
+
+function isMobile() {
+  return window.matchMedia('(max-width: 768px)').matches || window.matchMedia('(pointer: coarse)').matches;
+}
+
+function openApp(appId) {
+  const app = APPS[appId];
+  if (!app) return;
+  if (openWindows.has(appId)) { focusWindow(appId); return; }
+  const size = app.size || { w: 720, h: 480 };
+  let x, y, w, h;
+  if (isMobile()) {
+    x = 0; y = 0; w = window.innerWidth; h = window.innerHeight;
+  } else {
+    w = Math.min(size.w, window.innerWidth - 60);
+    h = Math.min(size.h, window.innerHeight - 120);
+    const offset = openWindows.size * 28;
+    x = Math.max(50, (window.innerWidth - w) / 2 + offset - 60);
+    y = Math.max(50, (window.innerHeight - h) / 2 + offset - 80);
+  }
+  createWindowEl(appId, app, x, y, w, h);
+}
+
+function navigateInPlace(currentAppId, newAppId) {
+  const app = APPS[newAppId];
+  if (!app) return;
+  const w = openWindows.get(currentAppId);
+  if (!w) { openApp(newAppId); return; }
+  if (openWindows.has(newAppId) && newAppId !== currentAppId) { focusWindow(newAppId); return; }
+  const el = w.el;
+  el.dataset.app = newAppId;
+  el.querySelector('.window__title').textContent = app.title;
+  el.querySelector('.window__body').innerHTML = app.render();
+  openWindows.delete(currentAppId);
+  openWindows.set(newAppId, w);
+  wireWindowBodyEvents(el, newAppId);
+  focusWindow(newAppId);
+  renderTaskbar();
+  updateHash();
+}
+
+function navigateFrom(currentAppId, targetAppId) {
+  const target = APPS[targetAppId];
+  const current = APPS[currentAppId];
+  if (!target) { openFallbackFile(targetAppId, currentAppId); return; }
+  const isFolderToFolder = current && current.isFolder && target.isFolder;
+  if (isFolderToFolder) navigateInPlace(currentAppId, targetAppId);
+  else openAppAbove(targetAppId, currentAppId);
+}
+
+function openAppAbove(appId, sourceAppId) {
+  const app = APPS[appId];
+  if (!app) return;
+  if (openWindows.has(appId)) { focusWindow(appId); return; }
+  const size = app.size || { w: 720, h: 480 };
+  let x, y, w, h;
+  if (isMobile()) { x = 0; y = 0; w = window.innerWidth; h = window.innerHeight; }
+  else {
+    const src = openWindows.get(sourceAppId);
+    w = Math.min(size.w, window.innerWidth - 60);
+    h = Math.min(size.h, window.innerHeight - 120);
+    if (src) { x = parseInt(src.el.style.left)+36; y = parseInt(src.el.style.top)+36; if (x+w>window.innerWidth) x=window.innerWidth-w-10; if (y+h>window.innerHeight-40) y=window.innerHeight-h-40; }
+    else { x = Math.max(50,(window.innerWidth-w)/2); y = Math.max(50,(window.innerHeight-h)/2); }
+  }
+  createWindowEl(appId, app, x, y, w, h);
+}
+
+function openFallbackFile(fileId, sourceAppId) {
+  const [type, idx] = fileId.split(':');
+  const i = parseInt(idx, 10) - 1;
+  let pseudoApp;
+  if (type === 'video' || type === 'myvid') {
+    const videos = cmsRows('videos');
+    const v = videos[i] || {};
+    pseudoApp = { title: v.label || `Video ${idx}.mp4`, size: { w: 760, h: 500 },
+      render: () => v.youtube_id
+        ? `<div class="player"><div class="player__screen"><iframe class="player__video-embed" src="https://www.youtube.com/embed/${v.youtube_id}" allow="autoplay;fullscreen" allowfullscreen></iframe></div></div>`
+        : renderPlayer('generic') };
+  } else if (type === 'photo' || type === 'team' || type === 'process' || type === 'gear') {
+    const photos = cmsRows('photos');
+    const label = `Photo ${idx}`;
+    pseudoApp = { title: label + '.jpg', size: { w: 720, h: 540 }, render: () => renderPhotoViewer(label, i, photos.length) };
+  } else if (type === 'merch') {
+    pseudoApp = { title: `merch.jpg`, size: { w: 680, h: 440 }, render: () => renderMerchItem(i) };
+  } else {
+    pseudoApp = { title: fileId, size: { w: 480, h: 360 }, render: () => `<div class="simple"><h1>${fileId}</h1></div>` };
+  }
+  let x, y, w, h;
+  if (isMobile()) { x=0; y=0; w=window.innerWidth; h=window.innerHeight; }
+  else {
+    const src = openWindows.get(sourceAppId);
+    w = pseudoApp.size.w; h = pseudoApp.size.h;
+    if (src) { x=parseInt(src.el.style.left)+36; y=parseInt(src.el.style.top)+36; } else { x=Math.max(50,(window.innerWidth-w)/2); y=Math.max(50,(window.innerHeight-h)/2); }
+  }
+  createWindowEl(fileId, pseudoApp, x, y, w, h);
+}
+
+function createWindowEl(appId, app, x, y, w, h) {
+  const win = document.createElement('div');
+  win.className = 'window opening active';
+  win.dataset.app = appId;
+  win.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px;z-index:${++zCounter}`;
+  win.innerHTML = `
+    <div class="window__titlebar">
+      <div class="window__title">${app.title}</div>
+      <div class="window__controls">
+        <div class="win-btn win-btn--share" data-action="share"></div>
+        <div class="win-btn win-btn--max" data-action="max"></div>
+        <div class="win-btn win-btn--close" data-action="close"></div>
+      </div>
+    </div>
+    <div class="window__body">${app.render()}</div>`;
+  document.body.appendChild(win);
+
+  win.querySelector('[data-action="close"]').addEventListener('click', e => { e.stopPropagation(); closeApp(win.dataset.app); });
+  win.querySelector('[data-action="share"]').addEventListener('click', e => { e.stopPropagation(); openShareMenu(win.dataset.app, e.currentTarget); });
+  win.querySelector('[data-action="max"]').addEventListener('click', e => { e.stopPropagation(); maximizeApp(win.dataset.app); });
+
+  if (!isMobile()) {
+    win.querySelector('.window__titlebar').addEventListener('mousedown', e => {
+      if (e.target.closest('.window__controls')) return;
+      focusWindow(win.dataset.app);
+      dragState = { appId: win.dataset.app, startX: e.clientX, startY: e.clientY, winX: parseInt(win.style.left), winY: parseInt(win.style.top) };
+      e.preventDefault();
+    });
+  }
+
+  wireWindowBodyEvents(win, appId);
+  openWindows.set(appId, { el: win, x, y });
+  focusWindow(appId);
+  renderTaskbar();
+  updateHash();
+  setTimeout(() => win.classList.remove('opening'), 250);
+}
+
+function wireWindowBodyEvents(win, appId) {
+  const body = win.querySelector('.window__body');
+  const newBody = body.cloneNode(true);
+  body.parentNode.replaceChild(newBody, body);
+  newBody.addEventListener('click', e => {
+    const currentId = win.dataset.app;
+    focusWindow(currentId);
+    if (e.target.closest('[data-back]')) { e.preventDefault(); e.stopPropagation(); navigateBack(currentId); return; }
+    const tgt = e.target.closest('[data-open]');
+    if (tgt) { e.preventDefault(); e.stopPropagation(); navigateFrom(currentId, tgt.dataset.open); return; }
+    const tocItem = e.target.closest('.doc__toc__item[data-scroll]');
+    if (tocItem) {
+      const id = tocItem.dataset.scroll;
+      const page = newBody.querySelector('.doc__page');
+      const target = page && page.querySelector('#' + id);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      newBody.querySelectorAll('.doc__toc__item').forEach(t => t.classList.remove('active'));
+      tocItem.classList.add('active');
+      return;
+    }
+    const pl = e.target.closest('[data-platform]');
+    if (pl) {
+      const map = {};
+      cmsRows('platforms').forEach(p => map[p.key || p.name.toLowerCase()] = p.url);
+      if (map[pl.dataset.platform]) window.open(map[pl.dataset.platform], '_blank');
+    }
+  });
+}
+
+function closeApp(appId) {
+  const w = openWindows.get(appId);
+  if (!w) return;
+  w.el.classList.add('closing');
+  setTimeout(() => { w.el.remove(); openWindows.delete(appId); renderTaskbar(); updateHash(); }, 150);
+}
+
+function maximizeApp(appId) {
+  if (isMobile()) return;
+  const w = openWindows.get(appId);
+  if (!w) return;
+  const el = w.el;
+  if (el.dataset.maxed === '1') {
+    el.style.left = el.dataset.prevX + 'px'; el.style.top = el.dataset.prevY + 'px';
+    el.style.width = el.dataset.prevW + 'px'; el.style.height = el.dataset.prevH + 'px';
+    el.dataset.maxed = '0';
+  } else {
+    el.dataset.prevX = parseInt(el.style.left); el.dataset.prevY = parseInt(el.style.top);
+    el.dataset.prevW = parseInt(el.style.width); el.dataset.prevH = parseInt(el.style.height);
+    el.style.left = '10px'; el.style.top = '42px';
+    el.style.width = (window.innerWidth - 20) + 'px'; el.style.height = (window.innerHeight - 96) + 'px';
+    el.dataset.maxed = '1';
+  }
+}
+
+function focusWindow(appId) {
+  document.querySelectorAll('.window').forEach(w => w.classList.remove('active'));
+  const w = openWindows.get(appId);
+  if (!w) return;
+  w.el.classList.add('active');
+  w.el.style.zIndex = ++zCounter;
+  renderTaskbar();
+}
+
+function navigateBack(currentId) {
+  const app = APPS[currentId];
+  if (app && app.parent) navigateInPlace(currentId, app.parent);
+}
+
+let currentShareApp = null;
+function openShareMenu(appId, btn) {
+  currentShareApp = appId;
+  const menu = document.getElementById('shareMenu');
+  const url = window.location.origin + window.location.pathname + '#' + appId;
+  document.getElementById('shareMenuUrl').textContent = url;
+  const rect = btn.getBoundingClientRect();
+  let left = rect.left - 180; if (left < 8) left = 8;
+  let top = rect.bottom + 4;
+  menu.style.left = left + 'px'; menu.style.top = top + 'px';
+  menu.classList.add('open');
+}
+function closeShareMenu() { document.getElementById('shareMenu').classList.remove('open'); currentShareApp = null; }
+function shareToPlatform(platform) {
+  if (!currentShareApp) return;
+  const url = window.location.origin + window.location.pathname + '#' + currentShareApp;
+  const win = openWindows.get(currentShareApp);
+  const title = (win ? win.el.querySelector('.window__title').textContent : currentShareApp) + ' — 64 / LAB';
+  if (platform === 'copy') { navigator.clipboard.writeText(url).then(() => showToast('ბმული დაკოპირდა'), () => showToast('ბმული: ' + url)); }
+  else if (platform === 'facebook') window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank', 'width=600,height=500');
+  else if (platform === 'twitter') window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank', 'width=600,height=500');
+  else if (platform === 'linkedin') window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank', 'width=600,height=500');
+  else if (platform === 'whatsapp') window.open(`https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`, '_blank');
+  else if (platform === 'telegram') window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank');
+  else if (platform === 'email') window.location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(url)}`;
+  closeShareMenu();
+}
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg;
+  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function renderTaskbar() {
+  const tb = document.getElementById('taskbarItems');
+  if (!tb) return;
+  tb.innerHTML = '';
+  openWindows.forEach((w, id) => {
+    const app = APPS[id];
+    const title = app ? app.title : (w.el.querySelector('.window__title').textContent || id);
+    const isActive = w.el.classList.contains('active');
+    const item = document.createElement('div');
+    item.className = 'taskbar__win' + (isActive ? ' active' : '');
+    item.textContent = title;
+    item.addEventListener('click', () => focusWindow(id));
+    tb.appendChild(item);
+  });
+}
+
+function updateHash() {
+  const active = Array.from(openWindows.values()).find(w => w.el.classList.contains('active'));
+  if (active) history.replaceState(null, '', '#' + active.el.dataset.app);
+  else history.replaceState(null, '', window.location.pathname);
+}
+
+function renderDesktopIcons() {
+  const desktop = document.getElementById('desktop');
+  const home = document.getElementById('homeGrid');
+  desktop.innerHTML = ''; home.innerHTML = '';
+  Object.entries(APPS).forEach(([id, app]) => {
+    if (!app.pos) return;
+    const ico = document.createElement('div');
+    ico.className = 'icon'; ico.style.left = app.pos.x + 'px'; ico.style.top = app.pos.y + 'px'; ico.dataset.open = id;
+    ico.innerHTML = `<div class="icon__art"><div class="${app.iconClass}">${app.iconExtra || ''}</div></div><div class="icon__label">${app.title}</div>`;
+    ico.addEventListener('dblclick', () => openApp(id));
+    ico.addEventListener('click', () => { document.querySelectorAll('.icon.selected').forEach(i => i.classList.remove('selected')); ico.classList.add('selected'); });
+    desktop.appendChild(ico);
+
+    const mobIco = document.createElement('div');
+    mobIco.className = 'home__icon'; mobIco.dataset.open = id;
+    mobIco.innerHTML = `<div class="home__icon__art"><div class="${app.iconClass}">${app.iconExtra || ''}</div></div><div class="home__icon__label">${app.title}</div>`;
+    mobIco.addEventListener('click', () => openApp(id));
+    home.appendChild(mobIco);
+  });
+  if (!isMobile()) {
+    let iconDrag = null;
+    document.querySelectorAll('#desktop .icon').forEach(ico => {
+      ico.addEventListener('mousedown', e => { if (e.button !== 0) return; iconDrag = { el: ico, startX: e.clientX, startY: e.clientY, icoX: parseInt(ico.style.left), icoY: parseInt(ico.style.top), moved: false }; });
+    });
+    document.addEventListener('mousemove', e => { if (!iconDrag) return; const dx = e.clientX-iconDrag.startX, dy = e.clientY-iconDrag.startY; if (Math.abs(dx)>4||Math.abs(dy)>4) iconDrag.moved = true; if (iconDrag.moved) { iconDrag.el.style.left = (iconDrag.icoX+dx)+'px'; iconDrag.el.style.top = (iconDrag.icoY+dy)+'px'; } });
+    document.addEventListener('mouseup', () => { iconDrag = null; });
+  }
+}
+
+document.addEventListener('mousemove', e => {
+  if (dragState) {
+    const dx = e.clientX-dragState.startX, dy = e.clientY-dragState.startY;
+    const w = openWindows.get(dragState.appId);
+    if (w) { w.el.style.left = (dragState.winX+dx)+'px'; w.el.style.top = Math.max(32,dragState.winY+dy)+'px'; }
+  }
+});
+document.addEventListener('mouseup', () => { dragState = null; });
+
+document.addEventListener('contextmenu', e => {
+  if (isMobile()) return; if (e.target.closest('.window')) return;
+  e.preventDefault();
+  const menu = document.getElementById('ctxMenu');
+  menu.classList.add('open');
+  menu.style.left = Math.min(e.clientX, window.innerWidth-220)+'px';
+  menu.style.top = Math.min(e.clientY, window.innerHeight-220)+'px';
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.ctx-menu')) document.getElementById('ctxMenu').classList.remove('open');
+  if (!e.target.closest('.share-menu') && !e.target.closest('[data-action="share"]')) document.getElementById('shareMenu').classList.remove('open');
+  if (!e.target.closest('.dropdown') && !e.target.closest('#brandMenu') && !e.target.closest('#startBtn')) {
+    document.querySelectorAll('.dropdown.open').forEach(d => d.classList.remove('open'));
+    const sb = document.getElementById('startBtn'); if (sb) sb.classList.remove('open');
+  }
+  const opener = e.target.closest('[data-open]');
+  if (opener && !e.target.closest('.window')) { e.preventDefault(); openApp(opener.dataset.open); }
+});
+
+document.getElementById('ctxMenu').addEventListener('click', e => {
+  const item = e.target.closest('.ctx-menu__item');
+  if (item && item.dataset.app) { openApp(item.dataset.app); document.getElementById('ctxMenu').classList.remove('open'); }
+});
+
+document.getElementById('startBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  const dd = document.getElementById('dropdown-brand');
+  const btn = document.getElementById('startBtn');
+  dd.classList.toggle('open'); btn.classList.toggle('open', dd.classList.contains('open'));
+});
+const brandMenuEl = document.getElementById('brandMenu');
+if (brandMenuEl) brandMenuEl.addEventListener('click', e => { e.stopPropagation(); document.getElementById('dropdown-brand').classList.toggle('open'); });
+
+document.getElementById('dropdown-brand').addEventListener('click', e => {
+  const item = e.target.closest('.dropdown__item');
+  if (!item) return;
+  if (item.classList.contains('dropdown__item--has-sub')) { item.classList.toggle('sub-open'); e.stopPropagation(); return; }
+  if (item.closest('.dropdown__sub')) { setTimeout(() => { document.getElementById('dropdown-brand').classList.remove('open'); const sb = document.getElementById('startBtn'); if (sb) sb.classList.remove('open'); }, 50); return; }
+  if (item.dataset.app) { openApp(item.dataset.app); document.getElementById('dropdown-brand').classList.remove('open'); const sb = document.getElementById('startBtn'); if (sb) sb.classList.remove('open'); }
+});
+
+document.querySelectorAll('.menubar__item[data-menu]').forEach(item => {
+  item.addEventListener('click', e => {
+    e.stopPropagation();
+    const m = item.dataset.menu;
+    if (m === 'about') openApp('about-window');
+    else if (m === 'register') openApp('register-window');
+    else if (m === 'contact') openApp('contact-window');
+    else if (m === 'platforms') openApp('mysites');
+  });
+});
+
+document.querySelectorAll('.dock__item[data-app]').forEach(item => {
+  item.addEventListener('click', () => openApp(item.dataset.app));
+});
+
+document.querySelectorAll('.share-menu__item[data-share]').forEach(item => {
+  item.addEventListener('click', () => shareToPlatform(item.dataset.share));
+});
+document.getElementById('shareMenuUrl').addEventListener('click', () => shareToPlatform('copy'));
+document.getElementById('shareMenuClose').addEventListener('click', closeShareMenu);
+
+function tickClock() {
+  const n = new Date();
+  const t = String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+  const tray = document.getElementById('trayClock'); if (tray) tray.textContent = t;
+  const c = document.getElementById('clock'); if (c) c.textContent = t;
+}
+tickClock(); setInterval(tickClock, 30000);
+
+let lastMobile = isMobile();
+window.addEventListener('resize', () => {
+  const nowMobile = isMobile();
+  if (nowMobile !== lastMobile) { lastMobile = nowMobile; openWindows.forEach((_,id) => closeApp(id)); }
+});
+
+/* =====================================================
+   BOOT SEQUENCE
+   ===================================================== */
+window.addEventListener('load', async () => {
+  await loadCMS();
+
+  // Build APPS from CMS data
+  APPS = buildAPPS();
+  buildPlatformsSubmenu();
+  renderDesktopIcons();
+
+  // Dismiss loading screen
+  setTimeout(() => {
+    const overlay = document.getElementById('loadingOverlay');
+    overlay.classList.add('hidden');
+    setTimeout(() => overlay.remove(), 400);
+  }, 800);
+
+  // Handle URL hash
+  const hash = window.location.hash.slice(1);
+  if (hash && APPS[hash]) setTimeout(() => openApp(hash), 300);
+});
+</script>
+
+</body>
+</html>

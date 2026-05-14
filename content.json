@@ -1,0 +1,87 @@
+{
+  "settings": {
+    "bg_sky_top": "#2e7ad9",
+    "bg_sky_mid": "#4f9fdf",
+    "bg_hill_1": "#5a8d3a",
+    "bg_hill_2": "#3a6b1e",
+    "wallpaper_url": ""
+  },
+  "about": {
+    "title": "რა არის 64?",
+    "mission": "ვქმნით ციფრულ კონტენტს, რომელიც ბრენდებსა და კონტენტის შემქმნელებს ეხმარება მათი მთავარი ისტორიების მოყოლაში.",
+    "history": "დავიწყეთ 2021 წელს, როგორც განმარტებითი ვიდეო ჟურნალისტიკის პლატფორმა. 3-კაციანი გუნდიდან გავიზარდეთ 12-კაციან სტუდიამდე.",
+    "vision": "2026 წლისთვის — მდგრადი კომერციული მოდელის ჩამოყალიბება. გრძელვადიანი მიზანი — საქართველოს ნომერ პირველი ციფრული პროდაქშენ სტუდია."
+  },
+  "contact": {
+    "email": "contact@64-studio.com",
+    "phone": "+995 XXX XX XX XX",
+    "address": "8 ბაქოს ქუჩა, თბილისი, საქართველო"
+  },
+  "mortgage": {
+    "months_left": "18",
+    "amount_left": "24,000",
+    "progress_pct": 38,
+    "patreon_url": "https://www.patreon.com/cw/PiradiSakme"
+  },
+  "platforms": [
+    { "name": "YouTube",   "handle": "@64-project",  "url": "https://www.youtube.com/@64-project",                    "key": "youtube"   },
+    { "name": "Instagram", "handle": "@64.project",  "url": "https://www.instagram.com/64.project/",                  "key": "instagram" },
+    { "name": "TikTok",    "handle": "@64.project",  "url": "https://www.tiktok.com/@64.project",                     "key": "tiktok"    },
+    { "name": "Facebook",  "handle": "64multimedia", "url": "https://www.facebook.com/64multimedia",                  "key": "facebook"  },
+    { "name": "LinkedIn",  "handle": "64-studio",    "url": "https://www.linkedin.com/company/64-studio",             "key": "linkedin"  },
+    { "name": "Spotify",   "handle": "Piradi Saqme", "url": "https://open.spotify.com/show/3YM9kXxTJrwz39ub2D2yYu",  "key": "spotify"   },
+    { "name": "Patreon",   "handle": "PiradiSakme",  "url": "https://www.patreon.com/cw/PiradiSakme",                 "key": "patreon"   }
+  ],
+  "audience": [
+    { "platform": "YouTube",   "subscribers": "200,000+", "views": "50,000,000+", "engagement": "High",      "key": "youtube"   },
+    { "platform": "TikTok",    "subscribers": "85,000+",  "views": "25,000,000+", "engagement": "Very High", "key": "tiktok"    },
+    { "platform": "Instagram", "subscribers": "45,000+",  "views": "8,500,000+",  "engagement": "Medium",    "key": "instagram" },
+    { "platform": "Facebook",  "subscribers": "95,000+",  "views": "12,000,000+", "engagement": "High",      "key": "facebook"  },
+    { "platform": "Spotify",   "subscribers": "5,200+",   "views": "125,000+",    "engagement": "Medium",    "key": "spotify"   }
+  ],
+  "services": [
+    { "id": "production", "title": "პროდაქშენი",         "items": "ვიდეო გადაღება და მონტაჟი\nმოუშენ გრაფიკა\nანიმაცია\nაუდიო პროდაქშენი / პოდკასტების ჩაწერა", "price": "" },
+    { "id": "design",     "title": "გრაფიკული დიზაინი",  "items": "სრულფასოვანი ბრენდბუქების დამზადება\nგრაფიკული ვიზუალების შექმნა\nვებგვერდების დიზაინი\nლოგოების დამზადება\nფონტების დამზადება", "price": "" },
+    { "id": "marketing",  "title": "ციფრული მარკეტინგი", "items": "ციფრული პლატფორმების სტრატეგია\nციფრული პლატფორმების მენეჯმენტი\nსოციალური მედიის კონტენტის შექმნა\nაუდიტორიის ანალიტიკა", "price": "" },
+    { "id": "rental",     "title": "სტუდიის გაქირავება", "items": "პროფესიონალური სტუდია\nგრინ სკრინი\nპოდკასტ სტუდია\nკამერები, განათება, მიკროფონები", "price": "400₾-დან" }
+  ],
+  "showreel": [
+    { "title": "64 Studio Showreel — 2024", "youtube_id": "" },
+    { "title": "64 Studio Showreel — 2025", "youtube_id": "" },
+    { "title": "Behind the Scenes",         "youtube_id": "" }
+  ],
+  "clients": [
+    { "name": "Smithsonian",  "logo_url": "assets/Smithsonian_logo_colored.png", "dark": false },
+    { "name": "TBC Bank",     "logo_url": "assets/TBC_logo_colored_txt.png",     "dark": false },
+    { "name": "Tegeta",       "logo_url": "assets/TEGETA_logo.png",              "dark": false },
+    { "name": "FAO",          "logo_url": "assets/FAO_logo_colored.png",         "dark": false },
+    { "name": "GPI",          "logo_url": "assets/GPI_logo_colored_eng.png",     "dark": false },
+    { "name": "PSP",          "logo_url": "assets/PSP_logo_colored.png",         "dark": false },
+    { "name": "Sukhishvilebi","logo_url": "assets/sukhishvili_white_txt.png",    "dark": true  }
+  ],
+  "videos": [
+    { "label": "TBC Brand Campaign.mp4",      "youtube_id": "", "thumb_url": "" },
+    { "label": "Smithsonian Mukhrani.mp4",    "youtube_id": "", "thumb_url": "" },
+    { "label": "Tegeta Product Reel.mp4",     "youtube_id": "", "thumb_url": "" },
+    { "label": "Piradi Saqme — Trailer.mp4",  "youtube_id": "", "thumb_url": "" }
+  ],
+  "photos": [
+    { "label": "Mukhrani 01.jpg",   "url": "" },
+    { "label": "Mukhrani 02.jpg",   "url": "" },
+    { "label": "TBC Shoot 01.jpg",  "url": "" },
+    { "label": "Studio Setup.jpg",  "url": "" }
+  ],
+  "merch": [
+    { "label": "64 T-Shirt",   "price": "45₾", "desc": "სტუდია 64-ის ოფიციალური მერჩი. ხარისხიანი მასალა.", "img_url": "" },
+    { "label": "64 Hoodie",    "price": "75₾", "desc": "სტუდია 64-ის ოფიციალური მერჩი. ხარისხიანი მასალა.", "img_url": "" },
+    { "label": "64 Cap",       "price": "35₾", "desc": "სტუდია 64-ის ოფიციალური მერჩი. ხარისხიანი მასალა.", "img_url": "" }
+  ],
+  "bin": [
+    { "label": "old_logo_v1_FINAL_FINAL.psd",    "icon": "📄" },
+    { "label": "budget_2024_DO_NOT_OPEN.xlsx",   "icon": "📊" },
+    { "label": "client_feedback_round_27.docx",  "icon": "📝" },
+    { "label": "meeting_notes_2am.txt",          "icon": "📋" },
+    { "label": "screenshot_screenshot.png",      "icon": "🖼" },
+    { "label": "IMG_8472.HEIC",                  "icon": "📸" }
+  ]
+}

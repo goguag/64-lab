@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>64 / LAB — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+Georgian:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0f0f0f;
+  --surface:  #1a1a1a;
+  --surface2: #242424;
+  --border:   #2e2e2e;
+  --accent:   #316ac5;
+  --accent2:  #4d8ef0;
+  --green:    #3a823a;
+  --red:      #c5391b;
+  --text:     #e8e8e8;
+  --muted:    #888;
+  --mono:     'JetBrains Mono', monospace;
+  --sans:     'Noto Sans Georgian', sans-serif;
+}
+
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; }
+
+/* ── Layout ── */
+.shell { display: grid; grid-template-rows: 48px 1fr; height: 100vh; }
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 20px; gap: 16px;
+}
+.topbar__logo { font-weight: 900; font-size: 18px; letter-spacing: -0.04em; color: var(--accent2); font-family: var(--sans); }
+.topbar__slash { color: var(--border); }
+.topbar__title { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.08em; }
+.topbar__right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.topbar__status { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.topbar__status.ok   { color: #5eac56; }
+.topbar__status.err  { color: var(--red); }
+.topbar__status.busy { color: #f0a500; }
+
+.btn {
+  height: 32px; padding: 0 14px;
+  border-radius: 4px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text);
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  cursor: pointer; letter-spacing: 0.06em;
+  display: flex; align-items: center; gap: 6px;
+  transition: all 0.15s;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent2); }
+.btn--save { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn--save:hover { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+.btn--danger { border-color: var(--red); color: var(--red); }
+.btn--danger:hover { background: var(--red); color: #fff; }
+.btn:disabled { opacity: 0.4; pointer-events: none; }
+
+.main { display: grid; grid-template-columns: 200px 1fr; overflow: hidden; }
+
+/* ── Sidebar ── */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 16px 0;
+  overflow-y: auto;
+}
+.sidebar__section { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.12em; padding: 8px 16px 4px; text-transform: uppercase; }
+.nav-item {
+  padding: 9px 16px;
+  cursor: pointer; color: var(--muted);
+  font-size: 13px; display: flex; align-items: center; gap: 10px;
+  border-left: 2px solid transparent;
+  transition: all 0.12s;
+}
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+.nav-item.active { color: var(--accent2); border-left-color: var(--accent); background: rgba(49,106,197,0.08); }
+.nav-item__icon { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
+
+/* ── Content area ── */
+.content { overflow-y: auto; padding: 28px 32px; }
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+.panel__title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.panel__desc  { font-size: 12px; color: var(--muted); font-family: var(--mono); margin-bottom: 28px; }
+
+/* ── Form elements ── */
+.field-group { margin-bottom: 24px; }
+.field-group__title { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+.field { margin-bottom: 14px; }
+.field__label { font-size: 12px; color: var(--muted); margin-bottom: 5px; font-family: var(--mono); display: flex; align-items: center; justify-content: space-between; }
+.field__label span { font-size: 10px; opacity: 0.6; }
+
+input[type=text], input[type=email], input[type=url], input[type=number], textarea, select {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 8px 10px;
+  font-size: 13px; font-family: var(--sans); color: var(--text);
+  outline: none; transition: border-color 0.15s;
+  resize: vertical;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+input[type=color] { width: 48px; height: 34px; padding: 2px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface2); cursor: pointer; }
+
+.field-row { display: grid; gap: 12px; }
+.field-row--2 { grid-template-columns: 1fr 1fr; }
+.field-row--3 { grid-template-columns: 1fr 1fr 1fr; }
+.field-row--color { grid-template-columns: 48px 1fr; align-items: end; }
+
+/* ── Repeater (arrays) ── */
+.repeater { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-bottom: 14px; }
+.repeater__header { background: var(--surface2); padding: 10px 14px; font-family: var(--mono); font-size: 11px; color: var(--muted); display: flex; align-items: center; justify-content: space-between; letter-spacing: 0.06em; }
+.repeater__row { border-top: 1px solid var(--border); padding: 14px; position: relative; }
+.repeater__row:hover { background: rgba(255,255,255,0.02); }
+.repeater__row__del { position: absolute; top: 12px; right: 12px; width: 22px; height: 22px; border-radius: 3px; background: transparent; border: 1px solid transparent; color: var(--muted); font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.12s; }
+.repeater__row__del:hover { background: var(--red); border-color: var(--red); color: #fff; }
+.repeater__add { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; justify-content: center; }
+.repeater__add .btn { font-size: 11px; height: 28px; }
+
+/* ── Color swatch picker ── */
+.bg-preview {
+  width: 100%; height: 80px; border-radius: 6px; margin-bottom: 14px;
+  border: 1px solid var(--border);
+  transition: background 0.3s;
+}
+
+/* ── Save bar ── */
+.save-bar {
+  position: fixed; bottom: 0; left: 200px; right: 0;
+  background: var(--surface); border-top: 1px solid var(--border);
+  padding: 12px 32px; display: flex; align-items: center; gap: 14px;
+  z-index: 10;
+}
+.save-bar__msg { font-family: var(--mono); font-size: 11px; color: var(--muted); flex: 1; }
+.save-bar__msg.ok  { color: #5eac56; }
+.save-bar__msg.err { color: var(--red); }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; top: 60px; right: 20px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 12px 16px;
+  font-family: var(--mono); font-size: 12px; color: var(--text);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  opacity: 0; transform: translateY(-8px);
+  transition: all 0.2s; pointer-events: none; z-index: 1000;
+  max-width: 320px;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.ok  { border-color: #3a823a; color: #5eac56; }
+.toast.err { border-color: var(--red); color: #e05c40; }
+
+/* Extra bottom padding so save bar doesn't overlap */
+.content { padding-bottom: 80px; }
+
+/* Range input */
+input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+.range-val { font-family: var(--mono); font-size: 12px; color: var(--accent2); margin-left: 8px; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar__logo">64</div>
+    <div class="topbar__slash">/</div>
+    <div class="topbar__title">LAB ADMIN</div>
+    <div class="topbar__right">
+      <div class="topbar__status" id="loadStatus">იტვირთება...</div>
+      <a href="lab.html" target="_blank"><button class="btn">👁 Lab-ის გახსნა</button></a>
+      <button class="btn btn--save" id="saveBtn">💾 შენახვა</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar__section">კონტენტი</div>
+      <div class="nav-item active" data-panel="background"><span class="nav-item__icon">🖼</span>Background</div>
+      <div class="nav-item" data-panel="about"><span class="nav-item__icon">ℹ️</span>ჩვენ შესახებ</div>
+      <div class="nav-item" data-panel="contact"><span class="nav-item__icon">📞</span>კონტაქტი</div>
+      <div class="nav-item" data-panel="mortgage"><span class="nav-item__icon">🐷</span>იპოთეკა</div>
+      <div class="sidebar__section">პორტფოლიო</div>
+      <div class="nav-item" data-panel="platforms"><span class="nav-item__icon">🌐</span>პლატფორმები</div>
+      <div class="nav-item" data-panel="audience"><span class="nav-item__icon">📊</span>სტატისტიკა</div>
+      <div class="nav-item" data-panel="services"><span class="nav-item__icon">📄</span>სერვისები</div>
+      <div class="nav-item" data-panel="showreel"><span class="nav-item__icon">🎬</span>Showreel</div>
+      <div class="nav-item" data-panel="clients"><span class="nav-item__icon">🏢</span>კლიენტები</div>
+      <div class="nav-item" data-panel="videos"><span class="nav-item__icon">🎥</span>ვიდეოები</div>
+      <div class="nav-item" data-panel="photos"><span class="nav-item__icon">🖼</span>ფოტოები</div>
+      <div class="nav-item" data-panel="merch"><span class="nav-item__icon">👕</span>მერჩი</div>
+      <div class="sidebar__section">სხვა</div>
+      <div class="nav-item" data-panel="bin"><span class="nav-item__icon">🗑</span>Recycle Bin</div>
+    </div>
+
+    <!-- CONTENT PANELS -->
+    <div class="content" id="contentArea">
+
+      <!-- BACKGROUND -->
+      <div class="panel active" id="panel-background">
+        <div class="panel__title">Background</div>
+        <div class="panel__desc">desktop-ის ბექგრაუნდის ფერები ან სურათი</div>
+        <div class="bg-preview" id="bgPreview"></div>
+        <div class="field-group">
+          <div class="field-group__title">ცის ფერები</div>
+          <div class="field-row field-row--2">
+            <div class="field">
+              <div class="field__label">ზედა ცა</div>
+              <div class="field-row field-row--color">
+                <input type="color" id="bg_sky_top_picker">
+                <input type="text" id="bg_sky_top" placeholder="#2e7ad9">
+              </div>
+            </div>
+            <div class="field">
+              <div class="field__label">შუა ცა</div>
+              <div class="field-row field-row--color">
+                <input type="color" id="bg_sky_mid_picker">
+                <input type="text" id="bg_sky_mid" placeholder="#4f9fdf">
+              </div>
+            </div>
+          </div>
+          <div class="field-row field-row--2">
+            <div class="field">
+              <div class="field__label">ბალახი (ღია)</div>
+              <div class="field-row field-row--color">
+                <input type="color" id="bg_hill_1_picker">
+                <input type="text" id="bg_hill_1" placeholder="#5a8d3a">
+              </div>
+            </div>
+            <div class="field">
+              <div class="field__label">ბალახი (მუქი)</div>
+              <div class="field-row field-row--color">
+                <input type="color" id="bg_hill_2_picker">
+                <input type="text" id="bg_hill_2" placeholder="#3a6b1e">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field-group__title">სურათი (გადაჯობებს ფერებს)</div>
+          <div class="field">
+            <div class="field__label">Wallpaper URL <span>სურათის პირდაპირი ბმული (https://...)</span></div>
+            <input type="url" id="wallpaper_url" placeholder="https://example.com/wallpaper.jpg">
+          </div>
+        </div>
+      </div>
+
+      <!-- ABOUT -->
+      <div class="panel" id="panel-about">
+        <div class="panel__title">ჩვენ შესახებ</div>
+        <div class="panel__desc">whatis64.txt ვინდოს კონტენტი</div>
+        <div class="field"><div class="field__label">სათაური</div><input type="text" id="about_title"></div>
+        <div class="field"><div class="field__label">მისია</div><textarea id="about_mission" rows="3"></textarea></div>
+        <div class="field"><div class="field__label">ისტორია</div><textarea id="about_history" rows="3"></textarea></div>
+        <div class="field"><div class="field__label">ხედვა</div><textarea id="about_vision" rows="3"></textarea></div>
+      </div>
+
+      <!-- CONTACT -->
+      <div class="panel" id="panel-contact">
+        <div class="panel__title">კონტაქტი</div>
+        <div class="panel__desc">contact.txt ვინდოს კონტენტი</div>
+        <div class="field"><div class="field__label">ელ-ფოსტა</div><input type="email" id="contact_email"></div>
+        <div class="field"><div class="field__label">ტელეფონი</div><input type="text" id="contact_phone"></div>
+        <div class="field"><div class="field__label">მისამართი</div><input type="text" id="contact_address"></div>
+      </div>
+
+      <!-- MORTGAGE -->
+      <div class="panel" id="panel-mortgage">
+        <div class="panel__title">იპოთეკა 🐷</div>
+        <div class="panel__desc">office_mortgage.app ვინდოს კონტენტი</div>
+        <div class="field-row field-row--2">
+          <div class="field"><div class="field__label">დარჩენილი თვეები</div><input type="text" id="mortgage_months_left"></div>
+          <div class="field"><div class="field__label">დარჩენილი თანხა (₾)</div><input type="text" id="mortgage_amount_left"></div>
+        </div>
+        <div class="field">
+          <div class="field__label">პროგრესი — <span id="mortgage_pct_val">0</span>%</div>
+          <input type="range" id="mortgage_progress_pct" min="0" max="100">
+        </div>
+        <div class="field"><div class="field__label">Patreon URL</div><input type="url" id="mortgage_patreon_url"></div>
+      </div>
+
+      <!-- PLATFORMS -->
+      <div class="panel" id="panel-platforms">
+        <div class="panel__title">პლატფორმები</div>
+        <div class="panel__desc">My Sites ვინდო + მენიუ + dropdown</div>
+        <div id="platforms-repeater"></div>
+      </div>
+
+      <!-- AUDIENCE -->
+      <div class="panel" id="panel-audience">
+        <div class="panel__title">სტატისტიკა</div>
+        <div class="panel__desc">audience.xlsx ვინდოს მონაცემები</div>
+        <div id="audience-repeater"></div>
+      </div>
+
+      <!-- SERVICES -->
+      <div class="panel" id="panel-services">
+        <div class="panel__title">სერვისები</div>
+        <div class="panel__desc">services.docx ვინდოს კონტენტი</div>
+        <div id="services-repeater"></div>
+      </div>
+
+      <!-- SHOWREEL -->
+      <div class="panel" id="panel-showreel">
+        <div class="panel__title">Showreel</div>
+        <div class="panel__desc">Showreel.mp4 ვინდოს playlist</div>
+        <div id="showreel-repeater"></div>
+      </div>
+
+      <!-- CLIENTS -->
+      <div class="panel" id="panel-clients">
+        <div class="panel__title">კლიენტები</div>
+        <div class="panel__desc">Our Clients ფოლდერი — ლოგოები</div>
+        <div id="clients-repeater"></div>
+      </div>
+
+      <!-- VIDEOS -->
+      <div class="panel" id="panel-videos">
+        <div class="panel__title">ვიდეოები</div>
+        <div class="panel__desc">Portfolio / Videos ფოლდერი</div>
+        <div id="videos-repeater"></div>
+      </div>
+
+      <!-- PHOTOS -->
+      <div class="panel" id="panel-photos">
+        <div class="panel__title">ფოტოები</div>
+        <div class="panel__desc">Portfolio / Photos ფოლდერი — სურათის URL (Drive, Imgur, ნებისმიერი)</div>
+        <div id="photos-repeater"></div>
+      </div>
+
+      <!-- MERCH -->
+      <div class="panel" id="panel-merch">
+        <div class="panel__title">მერჩი</div>
+        <div class="panel__desc">Merch ფოლდერი</div>
+        <div id="merch-repeater"></div>
+      </div>
+
+      <!-- BIN -->
+      <div class="panel" id="panel-bin">
+        <div class="panel__title">Recycle Bin</div>
+        <div class="panel__desc">ნაგვის ყუთის შიგთავსი (იუმორი 😄)</div>
+        <div id="bin-repeater"></div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- SAVE BAR -->
+<div class="save-bar">
+  <div class="save-bar__msg" id="saveMsg">ჩარჩო მზადაა — ცვლილებები შეინახე "💾 შენახვა"-ზე დაჭერით</div>
+  <button class="btn" id="previewBtn" onclick="window.open('lab.html','_blank')">👁 Preview</button>
+  <button class="btn btn--save" id="saveBtn2">💾 GitHub-ზე შენახვა</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================
+   CONFIG
+   ===================================================== */
+const GITHUB_TOKEN  = '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';
+const GITHUB_OWNER  = 'goguag';
+const GITHUB_REPO   = '64-lab';
+const CONTENT_FILE  = 'content.json';
+const GITHUB_BRANCH = 'main';
+
+const RAW_URL = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${CONTENT_FILE}`;
+const API_URL = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${CONTENT_FILE}`;
+
+/* =====================================================
+   STATE
+   ===================================================== */
+let DATA = null;
+let fileSha = null; // required for GitHub PUT
+
+/* =====================================================
+   LOAD
+   ===================================================== */
+async function loadContent() {
+  setStatus('იტვირთება...', '');
+  try {
+    // Use API (not raw) so we get sha
+    const r = await fetch(API_URL + '?t=' + Date.now(), {
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const meta = await r.json();
+    fileSha = meta.sha;
+    DATA = JSON.parse(atob(meta.content.replace(/\n/g, '')));
+    setStatus('✓ ჩაიტვირთა', 'ok');
+    populateAll();
+  } catch(e) {
+    setStatus('⚠ ვერ ჩაიტვირთა: ' + e.message, 'err');
+    showToast('GitHub-დან ჩარჩო ვერ ჩაიტვირთა. ინტერნეტი? Token?', 'err');
+  }
+}
+
+/* =====================================================
+   SAVE
+   ===================================================== */
+async function saveContent() {
+  if (!DATA) return;
+  collectAll();
+
+  setSaveBusy(true);
+  setStatus('ინახება...', 'busy');
+
+  const body = JSON.stringify({
+    message: 'admin: update content.json',
+    content: btoa(unescape(encodeURIComponent(JSON.stringify(DATA, null, 2)))),
+    sha: fileSha,
+    branch: GITHUB_BRANCH
+  });
+
+  try {
+    const r = await fetch(API_URL, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.message || 'HTTP ' + r.status); }
+    const res = await r.json();
+    fileSha = res.content.sha;
+    setStatus('✓ შენახულია', 'ok');
+    setSaveMsg('✓ GitHub-ზე შენახულია — Lab განახლდება ~30 წამში', 'ok');
+    showToast('✓ content.json განახლდა!', 'ok');
+  } catch(e) {
+    setStatus('⚠ შეცდომა', 'err');
+    setSaveMsg('⚠ შეცდომა: ' + e.message, 'err');
+    showToast('შენახვა ვერ მოხდა: ' + e.message, 'err');
+  } finally {
+    setSaveBusy(false);
+  }
+}
+
+function setSaveBusy(b) {
+  document.getElementById('saveBtn').disabled = b;
+  document.getElementById('saveBtn2').disabled = b;
+  document.getElementById('saveBtn2').textContent = b ? '⏳ ინახება...' : '💾 GitHub-ზე შენახვა';
+}
+function setStatus(msg, cls) {
+  const el = document.getElementById('loadStatus');
+  el.textContent = msg; el.className = 'topbar__status ' + cls;
+}
+function setSaveMsg(msg, cls) {
+  const el = document.getElementById('saveMsg');
+  el.textContent = msg; el.className = 'save-bar__msg ' + (cls || '');
+}
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+/* =====================================================
+   POPULATE (data → form)
+   ===================================================== */
+function populateAll() {
+  const d = DATA;
+
+  // Background
+  setVal('bg_sky_top', d.settings.bg_sky_top);
+  setVal('bg_sky_mid', d.settings.bg_sky_mid);
+  setVal('bg_hill_1',  d.settings.bg_hill_1);
+  setVal('bg_hill_2',  d.settings.bg_hill_2);
+  setVal('wallpaper_url', d.settings.wallpaper_url);
+  syncColorPickers();
+  updateBgPreview();
+
+  // About
+  setVal('about_title',   d.about.title);
+  setVal('about_mission', d.about.mission);
+  setVal('about_history', d.about.history);
+  setVal('about_vision',  d.about.vision);
+
+  // Contact
+  setVal('contact_email',   d.contact.email);
+  setVal('contact_phone',   d.contact.phone);
+  setVal('contact_address', d.contact.address);
+
+  // Mortgage
+  setVal('mortgage_months_left',  d.mortgage.months_left);
+  setVal('mortgage_amount_left',  d.mortgage.amount_left);
+  setVal('mortgage_patreon_url',  d.mortgage.patreon_url);
+  const slider = document.getElementById('mortgage_progress_pct');
+  slider.value = d.mortgage.progress_pct;
+  document.getElementById('mortgage_pct_val').textContent = d.mortgage.progress_pct;
+
+  // Repeaters
+  buildRepeater('platforms', d.platforms, [
+    { key: 'name',   label: 'სახელი',  type: 'text' },
+    { key: 'handle', label: 'Handle',  type: 'text' },
+    { key: 'url',    label: 'URL',     type: 'url'  },
+    { key: 'key',    label: 'key (lowercase, no spaces)', type: 'text' },
+  ]);
+  buildRepeater('audience', d.audience, [
+    { key: 'platform',    label: 'პლატფორმა',  type: 'text' },
+    { key: 'subscribers', label: 'Subscribers', type: 'text' },
+    { key: 'views',       label: 'Views',       type: 'text' },
+    { key: 'engagement',  label: 'Engagement',  type: 'text' },
+    { key: 'key',         label: 'key',         type: 'text' },
+  ]);
+  buildRepeater('services', d.services, [
+    { key: 'id',    label: 'ID (lowercase)',    type: 'text' },
+    { key: 'title', label: 'სათაური',          type: 'text' },
+    { key: 'items', label: 'ჩამონათვალი (ახალ სტრიქონზე)', type: 'textarea' },
+    { key: 'price', label: 'ფასი (ცარიელი = არ ჩანს)',      type: 'text' },
+  ]);
+  buildRepeater('showreel', d.showreel, [
+    { key: 'title',      label: 'სათაური',         type: 'text' },
+    { key: 'youtube_id', label: 'YouTube ID',       type: 'text' },
+  ]);
+  buildRepeater('clients', d.clients, [
+    { key: 'name',     label: 'სახელი',                    type: 'text' },
+    { key: 'logo_url', label: 'ლოგოს URL (ან assets/...)', type: 'text' },
+    { key: 'dark',     label: 'მუქი ფონი (true/false)',    type: 'text' },
+  ]);
+  buildRepeater('videos', d.videos, [
+    { key: 'label',      label: 'ფაილის სახელი',  type: 'text' },
+    { key: 'youtube_id', label: 'YouTube ID',      type: 'text' },
+    { key: 'thumb_url',  label: 'Thumbnail URL',   type: 'text' },
+  ]);
+  buildRepeater('photos', d.photos, [
+    { key: 'label', label: 'ფაილის სახელი', type: 'text' },
+    { key: 'url',   label: 'სურათის URL',   type: 'text' },
+  ]);
+  buildRepeater('merch', d.merch, [
+    { key: 'label',   label: 'სახელი',      type: 'text' },
+    { key: 'price',   label: 'ფასი',        type: 'text' },
+    { key: 'desc',    label: 'აღწერა',      type: 'text' },
+    { key: 'img_url', label: 'სურათის URL', type: 'text' },
+  ]);
+  buildRepeater('bin', d.bin, [
+    { key: 'label', label: 'ფაილის სახელი', type: 'text' },
+    { key: 'icon',  label: 'Emoji',         type: 'text' },
+  ]);
+}
+
+/* =====================================================
+   COLLECT (form → data)
+   ===================================================== */
+function collectAll() {
+  DATA.settings.bg_sky_top   = getVal('bg_sky_top');
+  DATA.settings.bg_sky_mid   = getVal('bg_sky_mid');
+  DATA.settings.bg_hill_1    = getVal('bg_hill_1');
+  DATA.settings.bg_hill_2    = getVal('bg_hill_2');
+  DATA.settings.wallpaper_url = getVal('wallpaper_url');
+
+  DATA.about.title   = getVal('about_title');
+  DATA.about.mission = getVal('about_mission');
+  DATA.about.history = getVal('about_history');
+  DATA.about.vision  = getVal('about_vision');
+
+  DATA.contact.email   = getVal('contact_email');
+  DATA.contact.phone   = getVal('contact_phone');
+  DATA.contact.address = getVal('contact_address');
+
+  DATA.mortgage.months_left  = getVal('mortgage_months_left');
+  DATA.mortgage.amount_left  = getVal('mortgage_amount_left');
+  DATA.mortgage.progress_pct = parseInt(document.getElementById('mortgage_progress_pct').value);
+  DATA.mortgage.patreon_url  = getVal('mortgage_patreon_url');
+
+  DATA.platforms = collectRepeater('platforms', ['name','handle','url','key']);
+  DATA.audience  = collectRepeater('audience',  ['platform','subscribers','views','engagement','key']);
+  DATA.services  = collectRepeater('services',  ['id','title','items','price']);
+  DATA.showreel  = collectRepeater('showreel',  ['title','youtube_id']);
+  DATA.clients   = collectRepeater('clients',   ['name','logo_url','dark']);
+  DATA.videos    = collectRepeater('videos',    ['label','youtube_id','thumb_url']);
+  DATA.photos    = collectRepeater('photos',    ['label','url']);
+  DATA.merch     = collectRepeater('merch',     ['label','price','desc','img_url']);
+  DATA.bin       = collectRepeater('bin',       ['label','icon']);
+
+  // fix dark field (string → bool) in clients
+  DATA.clients = DATA.clients.map(c => ({ ...c, dark: c.dark === 'true' || c.dark === true }));
+}
+
+/* =====================================================
+   REPEATER BUILDER
+   ===================================================== */
+function buildRepeater(id, rows, fields) {
+  const container = document.getElementById(id + '-repeater');
+  if (!container) return;
+
+  function render() {
+    container.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.className = 'repeater';
+
+    const header = document.createElement('div');
+    header.className = 'repeater__header';
+    header.innerHTML = `<span>${id} <span style="opacity:0.5">(${rows.length} ჩანაწერი)</span></span>`;
+    wrap.appendChild(header);
+
+    rows.forEach((row, i) => {
+      const rowEl = document.createElement('div');
+      rowEl.className = 'repeater__row';
+
+      const grid = document.createElement('div');
+      grid.className = 'field-row field-row--' + (fields.length <= 2 ? '2' : fields.length <= 4 ? '2' : '2');
+      grid.style.paddingRight = '32px';
+
+      fields.forEach(f => {
+        const fieldEl = document.createElement('div');
+        fieldEl.className = 'field';
+        const lbl = document.createElement('div');
+        lbl.className = 'field__label'; lbl.textContent = f.label;
+        fieldEl.appendChild(lbl);
+
+        let input;
+        if (f.type === 'textarea') {
+          input = document.createElement('textarea');
+          input.rows = 3;
+        } else {
+          input = document.createElement('input');
+          input.type = f.type || 'text';
+        }
+        input.value = row[f.key] !== undefined ? String(row[f.key]) : '';
+        input.dataset.field = f.key;
+        input.dataset.idx = i;
+        input.dataset.repeater = id;
+        input.addEventListener('input', () => { rows[i][f.key] = input.value; });
+        fieldEl.appendChild(input);
+        grid.appendChild(fieldEl);
+      });
+
+      rowEl.appendChild(grid);
+
+      // Delete button
+      const del = document.createElement('button');
+      del.className = 'repeater__row__del'; del.textContent = '×'; del.title = 'წაშლა';
+      del.addEventListener('click', () => { rows.splice(i, 1); render(); });
+      rowEl.appendChild(del);
+      wrap.appendChild(rowEl);
+    });
+
+    // Add row button
+    const addBar = document.createElement('div');
+    addBar.className = 'repeater__add';
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn'; addBtn.textContent = '+ ჩანაწერის დამატება';
+    addBtn.addEventListener('click', () => {
+      const newRow = {};
+      fields.forEach(f => newRow[f.key] = '');
+      rows.push(newRow);
+      render();
+      // Scroll to bottom of repeater
+      setTimeout(() => wrap.lastElementChild?.previousElementSibling?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    });
+    addBar.appendChild(addBtn);
+    wrap.appendChild(addBar);
+    container.appendChild(wrap);
+  }
+
+  render();
+}
+
+function collectRepeater(id, keys) {
+  const inputs = document.querySelectorAll(`[data-repeater="${id}"]`);
+  const map = {};
+  inputs.forEach(inp => {
+    const i = inp.dataset.idx;
+    if (!map[i]) map[i] = {};
+    map[i][inp.dataset.field] = inp.value;
+  });
+  return Object.values(map);
+}
+
+/* =====================================================
+   HELPERS
+   ===================================================== */
+function setVal(id, val) { const el = document.getElementById(id); if (el) el.value = val ?? ''; }
+function getVal(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+
+function syncColorPickers() {
+  ['bg_sky_top','bg_sky_mid','bg_hill_1','bg_hill_2'].forEach(id => {
+    const text = document.getElementById(id);
+    const picker = document.getElementById(id + '_picker');
+    if (!text || !picker) return;
+    picker.value = text.value || '#000000';
+    picker.addEventListener('input', () => { text.value = picker.value; updateBgPreview(); });
+    text.addEventListener('input', () => {
+      if (/^#[0-9a-fA-F]{6}$/.test(text.value)) { picker.value = text.value; }
+      updateBgPreview();
+    });
+  });
+}
+
+function updateBgPreview() {
+  const t = getVal('bg_sky_top') || '#2e7ad9';
+  const m = getVal('bg_sky_mid') || '#4f9fdf';
+  const h1 = getVal('bg_hill_1') || '#5a8d3a';
+  const h2 = getVal('bg_hill_2') || '#3a6b1e';
+  const preview = document.getElementById('bgPreview');
+  if (preview) preview.style.background = `linear-gradient(180deg, ${t} 0%, ${m} 50%, ${h1} 75%, ${h2} 100%)`;
+}
+
+/* =====================================================
+   NAV
+   ===================================================== */
+document.querySelectorAll('.nav-item[data-panel]').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('panel-' + item.dataset.panel)?.classList.add('active');
+  });
+});
+
+document.getElementById('mortgage_progress_pct')?.addEventListener('input', function() {
+  document.getElementById('mortgage_pct_val').textContent = this.value;
+});
+
+document.getElementById('saveBtn').addEventListener('click', saveContent);
+document.getElementById('saveBtn2').addEventListener('click', saveContent);
+
+/* =====================================================
+   BOOT
+   ===================================================== */
+loadContent();
+</script>
+</body>
+</html>

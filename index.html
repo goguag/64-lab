@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>64 / LAB — Access</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+Georgian:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'Noto Sans Georgian', sans-serif;
+  background:
+    linear-gradient(180deg,
+      transparent 0%, transparent 64%,
+      #5a8d3a 72%, #3a6b1e 100%),
+    linear-gradient(180deg,
+      #2e7ad9 0%, #4f9fdf 25%,
+      #7eb8e8 55%, #b5d4ef 75%, #d4e8f5 100%);
+  background-attachment: fixed;
+}
+
+/* XP clouds */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    radial-gradient(ellipse 80% 12% at 50% 73%, rgba(255,255,255,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 200px 60px at 20% 18%, rgba(255,255,255,0.55) 0%, transparent 70%),
+    radial-gradient(ellipse 240px 70px at 75% 10%, rgba(255,255,255,0.5) 0%, transparent 70%),
+    radial-gradient(ellipse 180px 50px at 45% 32%, rgba(255,255,255,0.4) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.gate {
+  position: relative;
+  z-index: 1;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* XP-style dialog window */
+.dialog {
+  background: #ece9d8;
+  border: 1px solid #1d65d9;
+  border-top: none;
+  border-radius: 8px 8px 4px 4px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.25);
+  overflow: hidden;
+  animation: winOpen 0.2s ease-out;
+}
+
+@keyframes winOpen {
+  from { transform: scale(0.94); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.dialog__titlebar {
+  height: 28px;
+  background: linear-gradient(180deg,
+    #0a47a8 0%, #1957c5 8%, #2e75e0 30%,
+    #3d8bf0 55%, #2c70d0 88%, #0a47a8 100%);
+  display: flex; align-items: center;
+  padding: 0 6px;
+  user-select: none;
+  position: relative;
+}
+.dialog__titlebar::before {
+  content: '';
+  position: absolute; top: 1px; left: 4px; right: 4px;
+  height: 1px; background: rgba(255,255,255,0.35);
+}
+.dialog__icon {
+  width: 14px; height: 14px;
+  background: #fff;
+  border: 1px solid #888; border-radius: 1px;
+  margin-right: 6px; flex-shrink: 0;
+  background-image: linear-gradient(0deg,
+    transparent 60%, #999 60%, #999 65%, transparent 65%,
+    transparent 80%, #999 80%, #999 85%, transparent 85%);
+}
+.dialog__title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 700;
+  color: #fff;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+  flex: 1;
+}
+.dialog__close {
+  width: 22px; height: 22px;
+  border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.3);
+  background: linear-gradient(180deg, #f08d6b 0%, #c5391b 50%, #a82815 100%);
+  color: #fff; font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  cursor: default;
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.35);
+}
+
+.dialog__body {
+  padding: 28px 28px 24px;
+}
+
+.dialog__logo {
+  font-family: 'Noto Sans Georgian', sans-serif;
+  font-weight: 900;
+  font-size: 42px;
+  letter-spacing: -0.05em;
+  color: #1d65d9;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.dialog__sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #7e7e7e;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+.dialog__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+.dialog__input-wrap {
+  position: relative;
+  margin-bottom: 20px;
+}
+.dialog__input {
+  width: 100%;
+  height: 26px;
+  background: #fff;
+  border: 1px solid #7f9db9;
+  border-radius: 0;
+  padding: 0 32px 0 8px;
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #1a1a1a;
+  letter-spacing: 0.15em;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.dialog__input:focus { border-color: #316ac5; box-shadow: 0 0 0 1px #316ac5; }
+.dialog__input.error { border-color: #c5391b; box-shadow: 0 0 0 1px #c5391b; animation: shake 0.35s ease; }
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(6px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(4px); }
+}
+.dialog__eye {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  cursor: pointer; font-size: 13px; opacity: 0.5; user-select: none;
+  transition: opacity 0.15s;
+}
+.dialog__eye:hover { opacity: 1; }
+
+.dialog__error {
+  font-size: 11px; color: #c5391b;
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: -14px; margin-bottom: 14px;
+  min-height: 14px;
+}
+
+/* XP-style OK button */
+.dialog__btn {
+  width: 100%;
+  height: 28px;
+  background: linear-gradient(180deg, #f4f4ec 0%, #ece9d8 60%, #d8d4c8 100%);
+  border: 1px solid #aca899;
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: 'Noto Sans Georgian', sans-serif;
+  font-weight: 600;
+  color: #1a1a1a;
+  cursor: pointer;
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.7), inset -1px -1px 0 rgba(0,0,0,0.08);
+  transition: filter 0.1s;
+  letter-spacing: 0.04em;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.dialog__btn:hover { filter: brightness(1.04); border-color: #316ac5; }
+.dialog__btn:active { background: linear-gradient(180deg, #d8d4c8 0%, #ece9d8 100%); box-shadow: inset 1px 1px 2px rgba(0,0,0,0.15); }
+.dialog__btn:focus { outline: 1px dotted #316ac5; outline-offset: 2px; }
+
+.dialog__btn--loading { pointer-events: none; opacity: 0.7; }
+
+.dialog__footer {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(0,0,0,0.1);
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #aca899;
+  text-align: center;
+  letter-spacing: 0.06em;
+}
+
+/* XP taskbar at bottom */
+.taskbar-bg {
+  position: fixed; bottom: 0; left: 0; right: 0; height: 32px;
+  background: linear-gradient(180deg, #1d65d9 0%, #2a7ce8 8%, #3d95ff 50%, #1d65d9 92%, #0a47a8 100%);
+  border-top: 1px solid #0a47a8;
+  display: flex; align-items: center; padding: 0 8px;
+  z-index: 2;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.taskbar-bg__brand {
+  background: linear-gradient(180deg, #5ec043 0%, #5eac56 10%, #3a823a 50%, #2d6b2c 90%, #1f4f20 100%);
+  border: 1px solid #1a5c1a; border-bottom: none;
+  border-radius: 0 12px 0 0;
+  padding: 0 18px 0 10px;
+  height: 100%;
+  display: flex; align-items: center;
+  font-weight: 700; font-size: 13px; font-style: italic;
+  color: #fff; letter-spacing: 0.01em; gap: 6px;
+}
+.taskbar-bg__brand::before {
+  content: '';
+  width: 16px; height: 16px;
+  background: radial-gradient(circle at 40% 35%, #ffe066 30%, #f0a500 70%, #cc7700 100%);
+  border-radius: 50%; box-shadow: 0 0 4px rgba(255,200,0,0.5);
+}
+.taskbar-bg__clock {
+  margin-left: auto;
+  background: linear-gradient(180deg, #1a55b5 0%, #0a47a8 50%, #2a7ce8 100%);
+  border-left: 1px solid #0a47a8;
+  padding: 0 12px; height: 100%;
+  display: flex; align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: #fff;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+
+<div class="gate">
+  <div class="dialog">
+    <div class="dialog__titlebar">
+      <div class="dialog__icon"></div>
+      <div class="dialog__title">64 / LAB — Authentication Required</div>
+      <div class="dialog__close">✕</div>
+    </div>
+    <div class="dialog__body">
+      <div class="dialog__logo">64</div>
+      <div class="dialog__sub">Studio Lab · Restricted Access</div>
+
+      <div class="dialog__label">პაროლი / Password</div>
+      <div class="dialog__input-wrap">
+        <input
+          class="dialog__input"
+          id="pwInput"
+          type="password"
+          autocomplete="current-password"
+          placeholder="••••••••"
+          autofocus
+        >
+        <div class="dialog__eye" id="eyeBtn" title="Show/hide">👁</div>
+      </div>
+      <div class="dialog__error" id="errMsg"></div>
+
+      <button class="dialog__btn" id="loginBtn">
+        <span id="btnText">შესვლა / Enter</span>
+      </button>
+
+      <div class="dialog__footer">
+        studio64.lab · authorized personnel only
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- XP taskbar -->
+<div class="taskbar-bg">
+  <div class="taskbar-bg__brand">start</div>
+  <div class="taskbar-bg__clock" id="clock">--:--</div>
+</div>
+
+<script>
+// ======================================================
+// PASSWORD CONFIG
+// SHA-256 hash of "admin" — never store plaintext passwords
+// To change: run btoa(await crypto.subtle.digest(...)) or use:
+// https://emn178.github.io/online-tools/sha256.html
+// "admin" → 8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
+// ======================================================
+const PASS_HASH = '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918';
+const SESSION_KEY = '64lab_auth';
+const LAB_PAGE = 'lab.html';
+
+// Already authenticated?
+if (sessionStorage.getItem(SESSION_KEY) === 'ok') {
+  window.location.replace(LAB_PAGE);
+}
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function tryLogin() {
+  const val = document.getElementById('pwInput').value;
+  if (!val) return;
+
+  const btn = document.getElementById('loginBtn');
+  const btnText = document.getElementById('btnText');
+  btn.classList.add('dialog__btn--loading');
+  btnText.textContent = 'მოწმდება...';
+
+  const hash = await sha256(val);
+
+  if (hash === PASS_HASH) {
+    sessionStorage.setItem(SESSION_KEY, 'ok');
+    btnText.textContent = '✓ შედი...';
+    setTimeout(() => window.location.replace(LAB_PAGE), 300);
+  } else {
+    btn.classList.remove('dialog__btn--loading');
+    btnText.textContent = 'შესვლა / Enter';
+    const input = document.getElementById('pwInput');
+    const err = document.getElementById('errMsg');
+    input.value = '';
+    input.classList.add('error');
+    err.textContent = 'არასწორი პაროლი. სცადე თავიდან.';
+    setTimeout(() => { input.classList.remove('error'); err.textContent = ''; }, 2000);
+    input.focus();
+  }
+}
+
+document.getElementById('loginBtn').addEventListener('click', tryLogin);
+document.getElementById('pwInput').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+
+// Eye toggle
+document.getElementById('eyeBtn').addEventListener('click', () => {
+  const inp = document.getElementById('pwInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+});
+
+// Clock
+function tick() {
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+}
+tick(); setInterval(tick, 10000);
+</script>
+</body>
+</html>
