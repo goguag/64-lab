@@ -255,7 +255,7 @@ body::before {
     </div>
     <div class="dialog__body">
       <div class="dialog__logo">64</div>
-      <div class="dialog__sub">Studio Lab · Restricted Access</div>
+      <div class="dialog__sub">Studio Lab · Admin Access</div>
 
       <div class="dialog__label">პაროლი / Password</div>
       <div class="dialog__input-wrap">
@@ -270,6 +270,18 @@ body::before {
         <div class="dialog__eye" id="eyeBtn" title="Show/hide">👁</div>
       </div>
       <div class="dialog__error" id="errMsg"></div>
+
+      <div class="dialog__label" style="margin-top:4px;">GitHub Token <span style="font-size:10px;opacity:0.6;font-family:var(--mono);">github.com → Settings → Developer settings → PAT</span></div>
+      <div class="dialog__input-wrap">
+        <input
+          class="dialog__input"
+          id="tokenInput"
+          type="password"
+          placeholder="ghp_..."
+        >
+        <div class="dialog__eye" id="eyeBtn2" title="Show/hide">👁</div>
+      </div>
+      <div class="dialog__error" id="tokenErrMsg"></div>
 
       <button class="dialog__btn" id="loginBtn">
         <span id="btnText">შესვლა / Enter</span>
@@ -311,8 +323,18 @@ async function sha256(str) {
 }
 
 async function tryLogin() {
-  const val = document.getElementById('pwInput').value;
+  const val   = document.getElementById('pwInput').value;
+  const token = document.getElementById('tokenInput').value.trim();
   if (!val) return;
+
+  // Token check
+  if (!token || !token.startsWith('ghp_')) {
+    const te = document.getElementById('tokenErrMsg');
+    te.textContent = 'GitHub Token სავალდებულოა (ghp_-ით უნდა იწყებოდეს)';
+    document.getElementById('tokenInput').focus();
+    setTimeout(() => te.textContent = '', 3000);
+    return;
+  }
 
   const btn = document.getElementById('loginBtn');
   const btnText = document.getElementById('btnText');
@@ -323,6 +345,7 @@ async function tryLogin() {
 
   if (hash === PASS_HASH) {
     sessionStorage.setItem(SESSION_KEY, 'ok');
+    sessionStorage.setItem('64lab_ghtoken', token);
     btnText.textContent = '✓ შედი...';
     setTimeout(() => window.location.replace(LAB_PAGE), 300);
   } else {
@@ -340,10 +363,15 @@ async function tryLogin() {
 
 document.getElementById('loginBtn').addEventListener('click', tryLogin);
 document.getElementById('pwInput').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
 
-// Eye toggle
+// Eye toggles
 document.getElementById('eyeBtn').addEventListener('click', () => {
   const inp = document.getElementById('pwInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+});
+document.getElementById('eyeBtn2').addEventListener('click', () => {
+  const inp = document.getElementById('tokenInput');
   inp.type = inp.type === 'password' ? 'text' : 'password';
 });
 

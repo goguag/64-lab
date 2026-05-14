@@ -375,7 +375,6 @@ input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
 /* =====================================================
    CONFIG
    ===================================================== */
-const GITHUB_TOKEN  = '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';
 const GITHUB_OWNER  = 'goguag';
 const GITHUB_REPO   = '64-lab';
 const CONTENT_FILE  = 'content.json';
@@ -383,6 +382,9 @@ const GITHUB_BRANCH = 'main';
 
 const RAW_URL = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${CONTENT_FILE}`;
 const API_URL = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${CONTENT_FILE}`;
+
+// Token stored in sessionStorage — never in code
+function getToken() { return sessionStorage.getItem('64lab_ghtoken') || ''; }
 
 /* =====================================================
    STATE
@@ -398,7 +400,7 @@ async function loadContent() {
   try {
     // Use API (not raw) so we get sha
     const r = await fetch(API_URL + '?t=' + Date.now(), {
-      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+      headers: { 'Authorization': `token ${getToken()}`, 'Accept': 'application/vnd.github.v3+json' }
     });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const meta = await r.json();
@@ -433,7 +435,7 @@ async function saveContent() {
     const r = await fetch(API_URL, {
       method: 'PUT',
       headers: {
-        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Authorization': `token ${getToken()}`,
         'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json'
       },
