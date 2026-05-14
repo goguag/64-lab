@@ -364,6 +364,15 @@ input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
 
 <script>
 /* =====================================================
+   AUTH GUARD
+   ===================================================== */
+(function() {
+  if (sessionStorage.getItem('64lab_auth') !== 'ok') {
+    window.location.replace('index.html');
+  }
+})();
+
+/* =====================================================
    CONFIG
    ===================================================== */
 const GITHUB_TOKEN  = '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';

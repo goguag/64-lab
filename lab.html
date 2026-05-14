@@ -641,15 +641,6 @@ input, textarea, select { font-family: inherit; }
 
 <script>
 /* =====================================================
-   AUTH GUARD — redirect to index.html if not logged in
-   ===================================================== */
-(function() {
-  if (sessionStorage.getItem('64lab_auth') !== 'ok') {
-    window.location.replace('index.html');
-  }
-})();
-
-/* =====================================================
    CONTENT.JSON CONFIG
    ===================================================== */
 const CONTENT_URL = 'content.json';
@@ -694,14 +685,17 @@ const DEFAULTS = {
 async function loadCMS() {
   setLoadingText('კონტენტი იტვირთება...');
   try {
-    const resp = await fetch(CONTENT_URL + '?t=' + Date.now());
+    // 4 second timeout — if content.json unreachable, use defaults immediately
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+    const resp = await fetch(CONTENT_URL + '?t=' + Date.now(), { signal: controller.signal });
+    clearTimeout(timer);
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     CMS = await resp.json();
     setLoadingText('კონტენტი ჩაიტვირთა ✓');
   } catch (e) {
-    console.warn('content.json load failed, using defaults:', e.message);
     CMS = JSON.parse(JSON.stringify(DEFAULTS));
-    setLoadingText('ჩატვირთვა ლოკალური მონაცემებით...');
+    setLoadingText('მზადაა');
   }
   applySettings();
 }
